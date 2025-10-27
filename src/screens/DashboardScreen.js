@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import ScreenContainer from '../components/ScreenContainer';
+import HeaderBar from '../components/HeaderBar';
 import { Ionicons } from '@expo/vector-icons';
 import MenuCard from '../components/MenuCard';
 import CalendarStrip from '../components/CalendarStrip';
@@ -15,26 +17,15 @@ export default function DashboardScreen({ navigation }) {
     { id: 7, title: 'Products', icon: 'cube', color: '#66BB6A' },
     { id: 8, title: 'Message', icon: 'send', color: '#66BB6A' },
     { id: 9, title: 'Received Payment', icon: 'cash', color: '#66BB6A' },
-    { id: 12, title: "What's App", icon: 'logo-whatsapp', color: '#66BB6A' },
-    { id: 13, title: 'Milk Report', icon: 'flask', color: '#66BB6A' },
-    { id: 15, title: 'Group Management', icon: 'people-circle', color: '#66BB6A' },
-    { id: 16, title: 'Settings', icon: 'settings', color: '#66BB6A' },
   ];
 
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.openDrawer()}>
-          <Ionicons name="menu" size={28} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Milk Wala</Text>
-        <TouchableOpacity>
-          <Ionicons name="grid" size={28} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <HeaderBar title="Milk Wala" navigation={navigation} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScreenContainer scroll contentStyle={{ paddingBottom: 40 }}>
         {/* Calendar Strip */}
         <CalendarStrip selectedDate={selectedDate} onDateSelect={setSelectedDate} />
 
@@ -97,6 +88,7 @@ export default function DashboardScreen({ navigation }) {
           <Text style={styles.footerTitle}>India's</Text>
           <Text style={styles.footerSubtitle}>milk app ❤️</Text>
         </View>
+        </ScreenContainer>
       </ScrollView>
     </View>
   );
@@ -108,24 +100,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#90EE90',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 50 : 40,
-    paddingBottom: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
+  headerTitle: {},
   content: {
     flex: 1,
   },
@@ -163,7 +140,7 @@ const styles = StyleSheet.create({
   menuGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
     paddingBottom: 20,
   },
   footer: {

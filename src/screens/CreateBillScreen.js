@@ -206,6 +206,9 @@ const styles = StyleSheet.create({
   },
   body: {
     padding: 16,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 900,
   },
   label: {
     fontSize: 14,

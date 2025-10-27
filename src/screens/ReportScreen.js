@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, ScrollView } from 'react-native';
+import ScreenContainer from '../components/ScreenContainer';
 import { Ionicons } from '@expo/vector-icons';
 
 // Demo sales data; in a real app this would come from your store/DB
@@ -95,54 +96,54 @@ export default function ReportScreen() {
         <Text style={styles.headerTitle}>Reports</Text>
       </View>
 
-      {/* Tabs */}
-      <View style={styles.tabs}>{['Daily', 'Weekly', 'Monthly'].map(tabButton)}</View>
+      <ScreenContainer scroll contentStyle={{ paddingBottom: 40 }}>
+        {/* Tabs */}
+        <View style={styles.tabs}>{['Daily', 'Weekly', 'Monthly'].map(tabButton)}</View>
 
-      {/* Anchor date controls */}
-      <View style={styles.anchorRow}>
-        <TouchableOpacity style={styles.anchorBtn} onPress={() => shiftAnchor(-1)}>
-          <Ionicons name="chevron-back" size={18} color="#2e7d32" />
-        </TouchableOpacity>
-        <Text style={styles.anchorText}>
-          {activeTab}: {toYMD(range.from)}
-          {range.to > range.from ? ` → ${toYMD(range.to)}` : ''}
-        </Text>
-        <TouchableOpacity style={styles.anchorBtn} onPress={() => shiftAnchor(1)}>
-          <Ionicons name="chevron-forward" size={18} color="#2e7d32" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Totals */}
-      <View style={styles.cardsRow}>
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Total Milk Sold</Text>
-          <Text style={[styles.cardValue, { color: '#2e7d32' }]}>{totalMilk.toFixed(2)} L</Text>
+        {/* Anchor date controls */}
+        <View style={styles.anchorRow}>
+          <TouchableOpacity style={styles.anchorBtn} onPress={() => shiftAnchor(-1)}>
+            <Ionicons name="chevron-back" size={18} color="#2e7d32" />
+          </TouchableOpacity>
+          <Text style={styles.anchorText}>
+            {activeTab}: {toYMD(range.from)}
+            {range.to > range.from ? ` → ${toYMD(range.to)}` : ''}
+          </Text>
+          <TouchableOpacity style={styles.anchorBtn} onPress={() => shiftAnchor(1)}>
+            <Ionicons name="chevron-forward" size={18} color="#2e7d32" />
+          </TouchableOpacity>
         </View>
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Income</Text>
-          <Text style={[styles.cardValue, { color: '#2e7d32' }]}>₹ {income.toFixed(2)}</Text>
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Pending Amount</Text>
-          <Text style={[styles.cardValue, { color: '#B26A00' }]}>₹ {pending.toFixed(2)}</Text>
-        </View>
-      </View>
 
-      {/* Export Buttons */}
-      <View style={styles.exportRow}>
-        <TouchableOpacity style={[styles.exportBtn, styles.pdfBtn]} onPress={onExportPDF}>
-          <Ionicons name="document-outline" size={18} color="#2e7d32" />
-          <Text style={[styles.exportText, { color: '#2e7d32' }]}>Export PDF</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.exportBtn, styles.xlsBtn]} onPress={onExportExcel}>
-          <Ionicons name="download-outline" size={18} color="#fff" />
-          <Text style={[styles.exportText, { color: '#fff' }]}>Export Excel</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Totals */}
+        <View style={styles.cardsRow}>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Total Milk Sold</Text>
+            <Text style={[styles.cardValue, { color: '#2e7d32' }]}>{totalMilk.toFixed(2)} L</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Income</Text>
+            <Text style={[styles.cardValue, { color: '#2e7d32' }]}>₹ {income.toFixed(2)}</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Pending Amount</Text>
+            <Text style={[styles.cardValue, { color: '#B26A00' }]}>₹ {pending.toFixed(2)}</Text>
+          </View>
+        </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+        {/* Export Buttons */}
+        <View style={styles.exportRow}>
+          <TouchableOpacity style={[styles.exportBtn, styles.pdfBtn]} onPress={onExportPDF}>
+            <Ionicons name="document-outline" size={18} color="#2e7d32" />
+            <Text style={[styles.exportText, { color: '#2e7d32' }]}>Export PDF</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.exportBtn, styles.xlsBtn]} onPress={onExportExcel}>
+            <Ionicons name="download-outline" size={18} color="#fff" />
+            <Text style={[styles.exportText, { color: '#fff' }]}>Export Excel</Text>
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.note}>Note: Values are based on demo data. Wire to real data as needed.</Text>
-      </ScrollView>
+      </ScreenContainer>
     </View>
   );
 }
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
   },
   tabBtn: {
@@ -182,14 +183,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   anchorBtn: { padding: 8, borderRadius: 8, backgroundColor: '#E8F5E9' },
   anchorText: { fontWeight: '700', color: '#333' },
   cardsRow: {
     flexDirection: 'row',
     gap: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 12,
   },
   card: {
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
   exportRow: {
     flexDirection: 'row',
     gap: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 12,
   },
   exportBtn: {

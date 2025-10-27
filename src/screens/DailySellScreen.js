@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import ScreenContainer from '../components/ScreenContainer';
 
 function toYMD(d) {
   const year = d.getFullYear();
@@ -85,6 +86,7 @@ export default function DailySellScreen() {
       </View>
 
       {/* Filters: Date and Delivery Boy */}
+      <ScreenContainer>
       <View style={styles.filters}>
         <View style={styles.dateBox}>
           <TouchableOpacity style={styles.dateBtn} onPress={() => shiftDate(-1)}>
@@ -120,7 +122,7 @@ export default function DailySellScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
         ListEmptyComponent={() => (
           <View style={styles.empty}> 
             <Ionicons name="water-outline" size={48} color="#bbb" />
@@ -128,6 +130,7 @@ export default function DailySellScreen() {
           </View>
         )}
       />
+      </ScreenContainer>
     </View>
   );
 }
@@ -154,7 +157,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   filters: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 12,
     gap: 12,
   },

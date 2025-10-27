@@ -8,10 +8,19 @@ import {
   FlatList,
   Modal,
   Platform,
+  Dimensions,
   Alert,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import ScreenContainer from '../components/ScreenContainer';
+
+// Layout constants for web modal sizing
+const { width: WINDOW_WIDTH } = Dimensions.get('window');
+const DRAWER_WIDTH_WEB = 280;
+const PAGE_GUTTER = 16;
+const CONTENT_WIDTH_WEB = Math.max(360, WINDOW_WIDTH - DRAWER_WIDTH_WEB - PAGE_GUTTER * 2);
+const MODAL_MAX_WIDTH = 640; // smaller modal width on large screens
 
 export default function DeliveryBoyScreen() {
   const [query, setQuery] = useState('');
@@ -127,6 +136,7 @@ export default function DeliveryBoyScreen() {
       </View>
 
       {/* Toolbar */}
+      <ScreenContainer>
       <View style={styles.toolbar}>
         <View style={styles.searchBox}>
           <Ionicons name="search" size={18} color="#999" />
@@ -148,7 +158,7 @@ export default function DeliveryBoyScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
         ListEmptyComponent={() => (
           <View style={styles.empty}>
             <Ionicons name="car-outline" size={48} color="#bbb" />
@@ -156,6 +166,7 @@ export default function DeliveryBoyScreen() {
           </View>
         )}
       />
+      </ScreenContainer>
 
       {/* Add/Edit Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
@@ -262,7 +273,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 12,
   },
   searchBox: {
@@ -359,6 +370,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
+    alignSelf: Platform.select({ web: 'center', default: 'center' }),
+    width: Platform.select({ web: Math.min(CONTENT_WIDTH_WEB, MODAL_MAX_WIDTH), default: undefined }),
   },
   modalTitle: {
     fontSize: 18,

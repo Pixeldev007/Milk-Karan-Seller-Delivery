@@ -1,6 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Modal, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Modal, Platform, Alert, Dimensions } from 'react-native';
+import ScreenContainer from '../components/ScreenContainer';
 import { Ionicons } from '@expo/vector-icons';
+
+// Layout constants for web modal sizing
+const { width: WINDOW_WIDTH } = Dimensions.get('window');
+const DRAWER_WIDTH_WEB = 280;
+const PAGE_GUTTER = 16;
+const CONTENT_WIDTH_WEB = Math.max(360, WINDOW_WIDTH - DRAWER_WIDTH_WEB - PAGE_GUTTER * 2);
+const MODAL_MAX_WIDTH = 640; // smaller modal width on large screens
 
 export default function ProductScreen() {
   const [query, setQuery] = useState('');
@@ -81,6 +89,7 @@ export default function ProductScreen() {
         <Text style={styles.headerTitle}>Products</Text>
       </View>
 
+      <ScreenContainer>
       <View style={styles.toolbar}>
         <View style={styles.searchBox}>
           <Ionicons name="search" size={18} color="#999" />
@@ -96,8 +105,9 @@ export default function ProductScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
       />
+      </ScreenContainer>
 
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalBackdrop}>
@@ -137,7 +147,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingHorizontal: 12, paddingTop: 12 },
+  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingHorizontal: 16, paddingTop: 12 },
   searchBox: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
   searchInput: { flex: 1, fontSize: 14, color: '#333' },
   addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#66BB6A', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10 },
@@ -150,7 +160,7 @@ const styles = StyleSheet.create({
   actBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8 },
   actText: { fontWeight: '700', fontSize: 12 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', padding: 20, justifyContent: 'center' },
-  modalContent: { backgroundColor: '#fff', borderRadius: 12, padding: 16 },
+  modalContent: { backgroundColor: '#fff', borderRadius: 12, padding: 16, alignSelf: Platform.select({ web: 'center', default: 'center' }), width: Platform.select({ web: Math.min(CONTENT_WIDTH_WEB, MODAL_MAX_WIDTH), default: undefined }) },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#333', marginBottom: 10 },
   input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12, marginTop: 10 },
   modalActions: { marginTop: 16, flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },

@@ -17,6 +17,8 @@ export default function CustomDrawerContent({ navigation }) {
     { id: 4, title: 'Rate Us', icon: 'star-outline', route: 'RateUs' },
     // Removed: Want custom app
     { id: 6, title: 'Contact Us', icon: 'call-outline', route: 'ContactUs' },
+    { id: 8, title: 'Milk Report', icon: 'document-text-outline', route: 'Report' },
+    { id: 9, title: 'Settings', icon: 'settings-outline', route: 'Settings' },
     { id: 7, title: 'Logout', icon: 'log-out-outline', route: 'Logout' },
   ];
 
@@ -49,10 +51,10 @@ export default function CustomDrawerContent({ navigation }) {
             key={item.id}
             style={styles.menuItem}
             onPress={() => {
-              if (item.route === 'Dashboard' || item.route === 'Subscription') {
+              // Navigate to known routes that exist in the drawer
+              if (['Dashboard', 'Subscription', 'Report', 'Settings'].includes(item.route)) {
                 navigation.navigate(item.route);
               }
-              // Other items are placeholders; wire up when screens exist
             }}
           >
             <Ionicons name={item.icon} size={24} color="#66BB6A" />

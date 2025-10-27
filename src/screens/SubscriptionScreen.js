@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, useWindowDimensions, Alert } from 'react-native';
+import HeaderBar from '../components/HeaderBar';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function SubscriptionScreen() {
+export default function SubscriptionScreen({ navigation }) {
   const { width } = useWindowDimensions();
   const isWide = width >= 900; // horizontal layout on desktop/tablets
 
@@ -10,7 +11,7 @@ export default function SubscriptionScreen() {
     Alert.alert('Subscribe', `Proceed to subscribe: ${plan}`);
   };
 
-  const Card = ({ title, price, limit, features, icon, buttonText, onPress }) => (
+  const Card = ({ title, price, limit, features, icon, buttonText, onPress, onSupport }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <Ionicons name={icon} size={26} color="#66BB6A" />
@@ -33,9 +34,14 @@ export default function SubscriptionScreen() {
         </View>
       ) : null}
       {buttonText ? (
-        <TouchableOpacity style={styles.cta} onPress={onPress}>
-          <Text style={styles.ctaText}>{buttonText}</Text>
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity style={styles.cta} onPress={onPress}>
+            <Text style={styles.ctaText}>{buttonText}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.cta, styles.ctaSecondary]} onPress={onSupport}>
+            <Text style={[styles.ctaText, { color: '#2e7d32' }]}>Contact Support</Text>
+          </TouchableOpacity>
+        </>
       ) : null}
     </View>
   );
@@ -43,9 +49,7 @@ export default function SubscriptionScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}> 
-        <Text style={styles.headerTitle}>Subscription</Text>
-      </View>
+      <HeaderBar title="Subscription" navigation={navigation} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Section 1: Current Plan Card */}
@@ -71,7 +75,7 @@ export default function SubscriptionScreen() {
           {/* Silver */}
           <View style={[styles.pricingCol, isWide ? styles.pricingColWide : styles.pricingColStacked]}>
             <Card
-              title="Silver Plan"
+              title="🥈 Silver"
               price="₹599 / month"
               limit="Limit: 100 Customers"
               features={[
@@ -81,15 +85,16 @@ export default function SubscriptionScreen() {
                 'Manual billing',
               ]}
               icon="medal-outline"
-              buttonText="Subscribe Silver"
+              buttonText="Subscribe Now"
               onPress={() => handleSubscribe('Silver')}
+              onSupport={() => Alert.alert('Support', 'We will contact you shortly.')}
             />
           </View>
 
           {/* Gold */}
           <View style={[styles.pricingCol, isWide ? styles.pricingColWide : styles.pricingColStacked]}>
             <Card
-              title="Gold Plan"
+              title="🥇 Gold"
               price="₹699 / month"
               limit="Limit: 300 Customers"
               features={[
@@ -99,15 +104,16 @@ export default function SubscriptionScreen() {
                 'Priority support',
               ]}
               icon="trophy-outline"
-              buttonText="Subscribe Gold"
+              buttonText="Subscribe Now"
               onPress={() => handleSubscribe('Gold')}
+              onSupport={() => Alert.alert('Support', 'We will contact you shortly.')}
             />
           </View>
 
           {/* Platinum */}
           <View style={[styles.pricingCol, isWide ? styles.pricingColWide : styles.pricingColStacked]}>
             <Card
-              title="Platinum Plan"
+              title="💎 Platinum"
               price="₹799 / month"
               limit="Unlimited Customers"
               features={[
@@ -117,8 +123,9 @@ export default function SubscriptionScreen() {
                 'Custom reports',
               ]}
               icon="diamond-outline"
-              buttonText="Subscribe Platinum"
+              buttonText="Subscribe Now"
               onPress={() => handleSubscribe('Platinum')}
+              onSupport={() => Alert.alert('Support', 'We will contact you shortly.')}
             />
           </View>
         </View>
@@ -132,25 +139,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f7f7f7',
   },
-  header: {
-    backgroundColor: '#90EE90',
-    paddingTop: Platform.OS === 'ios' ? 50 : 40,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
-  },
+  header: {},
+  headerTitle: {},
   scrollContent: {
     padding: 16,
     paddingBottom: 40,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 900,
   },
   sectionTitle: {
     fontSize: 18,

@@ -1,10 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
-const isDesktop = width > 768;
-const cardWidth = isDesktop ? (width - 80) / 4 : (width - 48) / 2;
+// On web, the drawer is permanent with width ~280, so the content area is narrower than the window
+const DRAWER_WIDTH_WEB = 280;
+const GRID_GUTTER = 16; // matches paddingHorizontal in DashboardScreen.menuGrid
+const CARD_MARGIN = 8;  // matches styles.card margin
+
+const availableWidth = Platform.OS === 'web' ? Math.max(320, width - DRAWER_WIDTH_WEB) : width;
+const isDesktop = availableWidth >= 768;
+const cols = isDesktop ? 4 : 2;
+
+// Total horizontal non-card width = left/right grid padding + outer card margins + gaps between cards
+// grid padding: 2 * GRID_GUTTER
+// outer margins: CARD_MARGIN * 2 (leftmost + rightmost)
+// gaps between cards: (cols - 1) * (CARD_MARGIN * 2) because each adjacent card contributes its margin
+const totalNonCard = (GRID_GUTTER * 2) + (CARD_MARGIN * 2) + ((cols - 1) * (CARD_MARGIN * 2));
+const cardWidth = (availableWidth - totalNonCard) / cols;
 
 export default function MenuCard({ title, icon, color, badge, onPress }) {
   return (

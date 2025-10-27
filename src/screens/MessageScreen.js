@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  body: { padding: 16 },
+  body: { padding: 16, alignSelf: 'center', width: '100%', maxWidth: 900 },
   label: { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 8 },
   textAreaWrap: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10 },
   textArea: { minHeight: 140, padding: 12, color: '#333' },

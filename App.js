@@ -1,4 +1,5 @@
 import 'react-native-gesture-handler';
+import 'react-native-reanimated';
 import React from 'react';
 import { Platform, useWindowDimensions } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -36,6 +37,19 @@ import MyDataScreen from './src/screens/MyDataScreen';
 import BillSettingScreen from './src/screens/BillSettingScreen';
 import InvoiceScreen from './src/screens/InvoiceScreen';
 
+if (__DEV__) {
+  try {
+    const reanimatedVersion = require('react-native-reanimated/package.json').version;
+    const drawerVersion = require('@react-navigation/drawer/package.json').version;
+    const workletsVersion = require('react-native-worklets/package.json').version;
+    // eslint-disable-next-line no-console
+    console.log('[Versions]', { reanimatedVersion, drawerVersion, workletsVersion });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.log('[Versions] lookup failed', e?.message);
+  }
+}
+
 const Drawer = createDrawerNavigator();
 
 export default function App() {
@@ -47,6 +61,7 @@ export default function App() {
     <NavigationContainer>
       <StatusBar style="light" />
       <Drawer.Navigator
+        useLegacyImplementation={false}
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
           headerShown: false,

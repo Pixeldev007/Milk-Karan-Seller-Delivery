@@ -1,0 +1,431 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Milk Wala Authentication Pages Schema",
+  "description": "Complete schema for Login and Register pages",
+  "definitions": {
+    "loginPage": {
+      "type": "object",
+      "title": "Login Page Schema",
+      "properties": {
+        "component": {
+          "type": "string",
+          "const": "LoginScreen"
+        },
+        "layout": {
+          "type": "object",
+          "properties": {
+            "container": {
+              "type": "string",
+              "const": "KeyboardAvoidingView"
+            },
+            "card": {
+              "type": "string",
+              "const": "View"
+            }
+          }
+        },
+        "formFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "enum": ["email", "password"]
+              },
+              "type": {
+                "type": "string",
+                "enum": ["email", "password"]
+              },
+              "required": {
+                "type": "boolean",
+                "const": true
+              },
+              "placeholder": {
+                "type": "string"
+              },
+              "secureTextEntry": {
+                "type": "boolean"
+              },
+              "keyboardType": {
+                "type": "string"
+              },
+              "autoCapitalize": {
+                "type": "string"
+              }
+            },
+            "required": ["name", "type", "required"]
+          }
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "rule": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "errorMessages": {
+              "type": "object",
+              "properties": {
+                "emptyFields": {
+                  "type": "string",
+                  "const": "Please enter both email and password."
+                }
+              }
+            }
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["button", "link"]
+              },
+              "handler": {
+                "type": "string"
+              },
+              "destination": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "state": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "default": ""
+            },
+            "password": {
+              "type": "string",
+              "default": ""
+            },
+            "loading": {
+              "type": "boolean",
+              "default": false
+            },
+            "error": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "required": ["email", "password", "loading", "error"]
+        }
+      }
+    },
+    "registerPage": {
+      "type": "object",
+      "title": "Register Page Schema",
+      "properties": {
+        "component": {
+          "type": "string",
+          "const": "RegisterScreen"
+        },
+        "layout": {
+          "type": "object",
+          "properties": {
+            "container": {
+              "type": "string",
+              "const": "KeyboardAvoidingView"
+            },
+            "card": {
+              "type": "string",
+              "const": "View"
+            }
+          }
+        },
+        "formFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "enum": ["fullName", "email", "password", "confirmPassword"]
+              },
+              "type": {
+                "type": "string",
+                "enum": ["text", "email", "password"]
+              },
+              "required": {
+                "type": "boolean",
+                "const": true
+              },
+              "placeholder": {
+                "type": "string"
+              },
+              "secureTextEntry": {
+                "type": "boolean"
+              },
+              "keyboardType": {
+                "type": "string"
+              },
+              "autoCapitalize": {
+                "type": "string"
+              }
+            },
+            "required": ["name", "type", "required"]
+          }
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "rule": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "errorMessages": {
+              "type": "object",
+              "properties": {
+                "emptyFields": {
+                  "type": "string",
+                  "const": "All fields are required."
+                },
+                "passwordMismatch": {
+                  "type": "string",
+                  "const": "Passwords do not match."
+                }
+              }
+            }
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["button", "link"]
+              },
+              "handler": {
+                "type": "string"
+              },
+              "destination": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "state": {
+          "type": "object",
+          "properties": {
+            "fullName": {
+              "type": "string",
+              "default": ""
+            },
+            "email": {
+              "type": "string",
+              "default": ""
+            },
+            "password": {
+              "type": "string",
+              "default": ""
+            },
+            "confirmPassword": {
+              "type": "string",
+              "default": ""
+            },
+            "loading": {
+              "type": "boolean",
+              "default": false
+            },
+            "error": {
+              "type": "string",
+              "default": ""
+            },
+            "message": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "required": ["fullName", "email", "password", "confirmPassword", "loading", "error", "message"]
+        }
+      }
+    },
+    "colorScheme": {
+      "type": "object",
+      "title": "Color Scheme",
+      "properties": {
+        "background": {
+          "type": "string",
+          "const": "#E8F5E9"
+        },
+        "cardBackground": {
+          "type": "string",
+          "const": "#fff"
+        },
+        "primaryGreen": {
+          "type": "string",
+          "const": "#66BB6A"
+        },
+        "darkGreen": {
+          "type": "string",
+          "const": "#1B5E20"
+        },
+        "mediumGreen": {
+          "type": "string",
+          "const": "#2E7D32"
+        },
+        "lightGreenBorder": {
+          "type": "string",
+          "const": "#C8E6C9"
+        },
+        "gray": {
+          "type": "string",
+          "const": "#4F5B62"
+        },
+        "error": {
+          "type": "string",
+          "const": "#D32F2F"
+        },
+        "success": {
+          "type": "string",
+          "const": "#2E7D32"
+        }
+      }
+    },
+    "styling": {
+      "type": "object",
+      "title": "Styling Schema",
+      "properties": {
+        "container": {
+          "type": "object",
+          "properties": {
+            "backgroundColor": {
+              "type": "string",
+              "const": "#E8F5E9"
+            },
+            "paddingHorizontal": {
+              "type": "number",
+              "const": 24
+            }
+          }
+        },
+        "card": {
+          "type": "object",
+          "properties": {
+            "maxWidth": {
+              "type": "number",
+              "const": 420
+            },
+            "backgroundColor": {
+              "type": "string",
+              "const": "#fff"
+            },
+            "borderRadius": {
+              "type": "number",
+              "const": 16
+            },
+            "padding": {
+              "type": "number",
+              "const": 28
+            }
+          }
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "number",
+              "const": 48
+            },
+            "borderWidth": {
+              "type": "number",
+              "const": 1
+            },
+            "borderColor": {
+              "type": "string",
+              "const": "#C8E6C9"
+            },
+            "borderRadius": {
+              "type": "number",
+              "const": 10
+            },
+            "paddingHorizontal": {
+              "type": "number",
+              "const": 14
+            },
+            "fontSize": {
+              "type": "number",
+              "const": 16
+            },
+            "backgroundColor": {
+              "type": "string",
+              "const": "#FAFAFA"
+            }
+          }
+        },
+        "button": {
+          "type": "object",
+          "properties": {
+            "backgroundColor": {
+              "type": "string",
+              "const": "#66BB6A"
+            },
+            "borderRadius": {
+              "type": "number",
+              "const": 10
+            },
+            "paddingVertical": {
+              "type": "number",
+              "const": 16
+            }
+          }
+        }
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "loginPage": {
+      "$ref": "#/definitions/loginPage"
+    },
+    "registerPage": {
+      "$ref": "#/definitions/registerPage"
+    },
+    "colorScheme": {
+      "$ref": "#/definitions/colorScheme"
+    },
+    "styling": {
+      "$ref": "#/definitions/styling"
+    }
+  }
+}
+

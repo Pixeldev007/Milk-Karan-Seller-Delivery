@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 12,
-    color: '#999',
+    color: '#4F5B62',
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 18,
-    color: '#333',
+    color: '#1B5E20',
     fontWeight: 'bold',
   },
   selectedDateText: {
@@ -107,12 +107,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: '#C8E6C9',
   },
   dateDisplayText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#2E7D32',
     marginRight: 8,
   },
 });

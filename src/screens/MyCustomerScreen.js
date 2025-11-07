@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,11 @@ import {
   Platform,
   Dimensions,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenContainer from '../components/ScreenContainer';
+import { getCustomers, addCustomer, updateCustomer, deleteCustomer } from '../lib/customers';
 
 // Layout constants (module scope) so StyleSheet can reference them
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
@@ -23,14 +25,39 @@ const MODAL_MAX_WIDTH = 720; // cap modal width on large screens
 
 export default function MyCustomerScreen() {
   const [query, setQuery] = useState('');
-  const [customers, setCustomers] = useState([
-    { id: '1', name: 'Ravi Kumar', phone: '9876543210', address: '12, MG Road, Coimbatore', plan: '1L/day', planType: 'Daily' },
-    { id: '2', name: 'Anita Sharma', phone: '9876501234', address: 'Sector 5, Ganapathy', plan: '500ml/day', planType: 'Seasonal' },
-  ]);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: '', phone: '', address: '', plan: '', planType: 'Daily' });
+
+  // Load customers from Supabase on mount
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
+  const loadCustomers = async () => {
+    setLoading(true);
+    const { data, error } = await getCustomers();
+    if (error) {
+      Alert.alert('Error', 'Failed to load customers: ' + error.message);
+      setCustomers([]);
+    } else {
+      // Map database fields to component format
+      const mappedCustomers = (data || []).map(c => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        address: c.address,
+        plan: c.plan,
+        planType: c.plan_type || 'Daily',
+      }));
+      setCustomers(mappedCustomers);
+    }
+    setLoading(false);
+  };
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -59,23 +86,92 @@ export default function MyCustomerScreen() {
   const handleDelete = (id) => {
     Alert.alert('Delete Customer', 'Are you sure you want to delete this customer?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => setCustomers((prev) => prev.filter((c) => c.id !== id)) },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          const { error } = await deleteCustomer(id);
+          if (error) {
+            Alert.alert('Error', 'Failed to delete customer: ' + error.message);
+          } else {
+            // Remove from local state
+            setCustomers((prev) => prev.filter((c) => c.id !== id));
+          }
+        },
+      },
     ]);
   };
 
-  const saveForm = () => {
+  const saveForm = async () => {
     const { name, phone, address, plan, planType } = form;
     if (!name.trim() || !phone.trim() || !address.trim() || !plan.trim()) {
       Alert.alert('Missing info', 'Please fill all fields.');
       return;
     }
-    if (editingId) {
-      setCustomers((prev) => prev.map((c) => (c.id === editingId ? { ...c, name, phone, address, plan, planType } : c)));
-    } else {
-      const newId = (Math.max(0, ...customers.map((c) => parseInt(c.id, 10))) + 1).toString();
-      setCustomers((prev) => [...prev, { id: newId, name, phone, address, plan, planType }]);
+
+    setSaving(true);
+    try {
+      if (editingId) {
+        // Update existing customer
+        const { data, error } = await updateCustomer(editingId, {
+          name,
+          phone,
+          address,
+          plan,
+          planType,
+        });
+        if (error) {
+          Alert.alert('Error', 'Failed to update customer: ' + error.message);
+        } else {
+          // Update local state
+          setCustomers((prev) =>
+            prev.map((c) =>
+              c.id === editingId
+                ? {
+                    id: data.id,
+                    name: data.name,
+                    phone: data.phone,
+                    address: data.address,
+                    plan: data.plan,
+                    planType: data.plan_type || 'Daily',
+                  }
+                : c
+            )
+          );
+          setModalVisible(false);
+        }
+      } else {
+        // Add new customer
+        const { data, error } = await addCustomer({
+          name,
+          phone,
+          address,
+          plan,
+          planType,
+        });
+        if (error) {
+          Alert.alert('Error', 'Failed to add customer: ' + error.message);
+        } else {
+          // Add to local state
+          setCustomers((prev) => [
+            {
+              id: data.id,
+              name: data.name,
+              phone: data.phone,
+              address: data.address,
+              plan: data.plan,
+              planType: data.plan_type || 'Daily',
+            },
+            ...prev,
+          ]);
+          setModalVisible(false);
+        }
+      }
+    } catch (err) {
+      Alert.alert('Error', 'An unexpected error occurred: ' + err.message);
+    } finally {
+      setSaving(false);
     }
-    setModalVisible(false);
   };
 
   const renderItem = ({ item }) => (
@@ -125,18 +221,25 @@ export default function MyCustomerScreen() {
       </View>
 
       {/* List */}
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 40 }}
-        ListEmptyComponent={() => (
-          <View style={styles.empty}> 
-            <Ionicons name="people-outline" size={48} color="#bbb" />
-            <Text style={styles.emptyText}>No customers found</Text>
-          </View>
-        )}
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#66BB6A" />
+          <Text style={styles.loadingText}>Loading customers...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          ListEmptyComponent={() => (
+            <View style={styles.empty}>
+              <Ionicons name="people-outline" size={48} color="#bbb" />
+              <Text style={styles.emptyText}>No customers found</Text>
+            </View>
+          )}
+        />
+      )}
       </ScreenContainer>
 
       {/* Add/Edit Modal */}
@@ -194,8 +297,16 @@ export default function MyCustomerScreen() {
               <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)}>
                 <Text style={[styles.modalBtnText, { color: '#333' }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={saveForm}>
-                <Text style={[styles.modalBtnText, { color: '#fff' }]}>{editingId ? 'Save' : 'Add'}</Text>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.saveBtn, saving && styles.modalBtnDisabled]}
+                onPress={saveForm}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={[styles.modalBtnText, { color: '#fff' }]}>{editingId ? 'Save' : 'Add'}</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -318,6 +429,20 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#999',
     marginTop: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#666',
+    fontSize: 14,
+  },
+  modalBtnDisabled: {
+    opacity: 0.6,
   },
   modalBackdrop: {
     flex: 1,

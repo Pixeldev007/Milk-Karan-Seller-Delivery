@@ -39,7 +39,7 @@ export default function RegisterScreen() {
     setMessage('');
     try {
       await signUp({ email: email.trim(), password, fullName: fullName.trim() });
-      setMessage('Account created! Please check your email to verify your account.');
+      setMessage('Account created successfully! You can now sign in.');
       setFullName('');
       setEmail('');
       setPassword('');

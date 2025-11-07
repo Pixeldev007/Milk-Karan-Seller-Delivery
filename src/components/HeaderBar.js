@@ -28,7 +28,7 @@ export default function HeaderBar({ title, navigation, right = null, backTo }) {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#90EE90',
+    backgroundColor: '#66BB6A',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

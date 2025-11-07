@@ -101,7 +101,7 @@ export default function DashboardScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#E8F5E9',
   },
   header: {
     
@@ -127,12 +127,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: '#C8E6C9',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   statNumberCompact: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
+    color: '#1B5E20',
   },
   statNumberEmphasis: {
     fontSize: 20,
@@ -152,7 +157,7 @@ const styles = StyleSheet.create({
   statCardEmphasis: {
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#e5f5ea',
+    borderColor: '#66BB6A',
   },
   menuGrid: {
     flexDirection: 'row',
@@ -170,11 +175,11 @@ const styles = StyleSheet.create({
   footerTitle: {
     fontSize: 32,
     fontWeight: '300',
-    color: '#ccc',
+    color: '#4F5B62',
   },
   footerSubtitle: {
     fontSize: 32,
     fontWeight: '300',
-    color: '#ccc',
+    color: '#4F5B62',
   },
 });

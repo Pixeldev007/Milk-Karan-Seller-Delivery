@@ -195,3 +195,4 @@ If you can't access your profile:
 - `src/lib/userProfile.js` - Helper functions for profile operations
 - `src/types/database.ts` - TypeScript type definitions
 
+

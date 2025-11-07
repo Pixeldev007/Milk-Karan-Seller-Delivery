@@ -177,3 +177,4 @@ You can now:
 
 **Summary:** The issue was that customers were only stored in local state. Now they're saved to Supabase database and persist across app restarts! 🚀
 
+

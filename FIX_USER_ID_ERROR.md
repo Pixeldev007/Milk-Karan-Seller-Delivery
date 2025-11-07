@@ -154,3 +154,4 @@ After running the fix:
 
 **Summary:** The issue was RLS policy blocking column access. Run `FIX_CUSTOMERS_USER_ID_ERROR.sql` to fix it! 🚀
 
+

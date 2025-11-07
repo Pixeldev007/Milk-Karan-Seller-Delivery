@@ -85,3 +85,4 @@ ORDER BY ordinal_position;
 
 -- Done! Table is recreated with all columns.
 
+

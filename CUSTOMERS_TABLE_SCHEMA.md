@@ -157,3 +157,4 @@ This table is used by:
 - All columns are required for the app to work properly
 - `user_id` is critical for RLS policies to work
 
+

@@ -146,3 +146,4 @@ LIMIT 5;
 
 Run `supabase-auth-schema.sql` to enable profile storage! 🚀
 
+

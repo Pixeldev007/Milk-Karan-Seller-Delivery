@@ -66,3 +66,4 @@ export interface UpdateBusinessProfileInput {
   qr_code_url?: string;
 }
 
+

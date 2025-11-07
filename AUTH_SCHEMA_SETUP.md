@@ -296,3 +296,4 @@ const { data, error } = await getUserProfile();
 
 **Note**: The `auth.users` table is automatically managed by Supabase. You don't need to create it manually. Email and password are stored there automatically when users register/login.
 
+

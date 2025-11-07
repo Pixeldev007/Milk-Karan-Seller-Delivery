@@ -45,3 +45,4 @@ GRANT ALL ON public.customers TO authenticated;
 
 -- Done! Now test your app.
 
+

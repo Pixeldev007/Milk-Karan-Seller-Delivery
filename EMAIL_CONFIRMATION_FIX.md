@@ -105,3 +105,4 @@ If `email_confirmed_at` is `NULL`, the email is not confirmed.
 
 The app code has been updated to show a "Resend Confirmation Email" button when this error occurs!
 
+

@@ -59,3 +59,4 @@ SELECT
     ELSE '❌ user_id column MISSING'
   END as verification;
 
+

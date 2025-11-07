@@ -144,3 +144,4 @@ WHERE table_schema = 'public'
 AND table_name = 'customers'
 AND grantee = 'authenticated';
 
+

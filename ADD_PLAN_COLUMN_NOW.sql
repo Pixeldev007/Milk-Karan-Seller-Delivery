@@ -61,3 +61,4 @@ AND table_name = 'customers'
 AND column_name IN ('plan', 'plan_type')
 ORDER BY column_name;
 
+

@@ -130,3 +130,4 @@ WHERE table_name = 'customers';
 
 **Summary:** The `plan` column is missing. Run `FIX_PLAN_COLUMN.sql` to add it without losing data! 🚀
 
+

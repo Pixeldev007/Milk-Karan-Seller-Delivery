@@ -114,3 +114,4 @@ AND table_name = 'customers';
 -- 8. created_at
 -- 9. updated_at
 
+

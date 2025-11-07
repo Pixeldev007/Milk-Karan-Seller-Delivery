@@ -207,3 +207,4 @@ AND table_name = 'customers';
 -- 8. created_at (added if missing)
 -- 9. updated_at (added if missing)
 
+

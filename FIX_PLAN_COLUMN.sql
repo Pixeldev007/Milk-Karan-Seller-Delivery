@@ -90,3 +90,4 @@ ORDER BY ordinal_position;
 -- Step 7: Test query
 -- SELECT id, name, phone, address, plan, plan_type FROM public.customers LIMIT 1;
 
+

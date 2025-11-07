@@ -169,3 +169,4 @@ After setup, verify:
 
 **Summary:** Disable email confirmation in Supabase Dashboard → Authentication → Providers → Email → Turn OFF "Confirm email". Users can now register and login directly! 🚀
 
+

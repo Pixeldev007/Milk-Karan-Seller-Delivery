@@ -40,3 +40,4 @@ WHERE table_schema = 'public'
 AND table_name = 'customers'
 ORDER BY ordinal_position;
 
+

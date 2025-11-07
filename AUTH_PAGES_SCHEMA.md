@@ -554,3 +554,4 @@ Both screens automatically redirect to Dashboard via `RootNavigator` when:
 - **Auth Context**: `src/context/AuthContext.js`
 - **Navigation Setup**: `App.js`
 
+

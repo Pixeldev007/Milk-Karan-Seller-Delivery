@@ -170,3 +170,4 @@ After confirming email, test login:
 
 **Summary:** "Waiting for verification" = Email sent but not confirmed. Confirm via email link, resend email, or manually confirm in Supabase dashboard.
 
+

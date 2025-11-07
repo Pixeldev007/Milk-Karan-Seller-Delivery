@@ -196,3 +196,4 @@ export type AuthNavigationProp = {
   navigate: (screen: 'Login' | 'Register') => void;
 };
 
+

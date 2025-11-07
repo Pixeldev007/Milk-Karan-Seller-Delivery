@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
-import ScreenContainer from '../components/ScreenContainer';
+import { View, Text, StyleSheet, Platform, FlatList } from 'react-native';
+// Removed ScreenContainer/ScrollView to avoid nesting a FlatList inside ScrollView
 import HeaderBar from '../components/HeaderBar';
 import { Ionicons } from '@expo/vector-icons';
 import MenuCard from '../components/MenuCard';
@@ -19,43 +19,54 @@ export default function DashboardScreen({ navigation }) {
     { id: 9, title: 'Received Payment', icon: 'cash', color: '#66BB6A' },
   ];
 
-  return (
-    <View style={styles.container}>
-      {/* Header */}
-      <HeaderBar title="Milk Wala" navigation={navigation} />
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <ScreenContainer scroll contentStyle={{ paddingBottom: 40 }}>
-        {/* Calendar Strip */}
-        <CalendarStrip selectedDate={selectedDate} onDateSelect={setSelectedDate} />
-
-        {/* Stats Boxes (3) */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCardCompact}>
-            <Text style={[styles.statNumberCompact, { color: '#66BB6A' }]}>0</Text>
-            <View style={[styles.statIconCircle, { backgroundColor: 'rgba(102,187,106,0.15)' }]}>
-              <Ionicons name="checkmark" size={20} color="#66BB6A" />
-            </View>
-          </View>
-          <View style={styles.statCardCompact}>
-            <Text style={[styles.statNumberCompact, { color: '#66BB6A' }]}>0</Text>
-            <View style={[styles.statIconCircle, { backgroundColor: 'rgba(102,187,106,0.15)' }]}>
-              <Ionicons name="close" size={20} color="#66BB6A" />
-            </View>
-          </View>
-          <View style={styles.statCardCompact}>
-            <Text style={[styles.statNumberCompact, { color: '#66BB6A' }]}>0.00 L</Text>
-            <View style={[styles.statIconCircle, { backgroundColor: 'rgba(102,187,106,0.15)' }]}>
-              <Ionicons name="water" size={20} color="#66BB6A" />
-            </View>
+  const ListHeader = (
+    <View>
+      <CalendarStrip selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+      <View style={styles.statsContainer}>
+        <View style={styles.statCardCompact}>
+          <Text style={[styles.statNumberCompact, { color: '#66BB6A' }]}>0</Text>
+          <View style={[styles.statIconCircle, { backgroundColor: 'rgba(102,187,106,0.15)' }]}>
+            <Ionicons name="checkmark" size={20} color="#66BB6A" />
           </View>
         </View>
+        <View style={styles.statCardCompact}>
+          <Text style={[styles.statNumberCompact, { color: '#66BB6A' }]}>0</Text>
+          <View style={[styles.statIconCircle, { backgroundColor: 'rgba(102,187,106,0.15)' }]}>
+            <Ionicons name="close" size={20} color="#66BB6A" />
+          </View>
+        </View>
+        <View style={[styles.statCardCompact, styles.statCardEmphasis]}>
+          <Text style={[styles.statNumberCompact, styles.statNumberEmphasis, { color: '#66BB6A' }]}>0.00 L</Text>
+          <View style={[styles.statIconCircle, styles.statIconCircleLarge, { backgroundColor: 'rgba(102,187,106,0.15)' }]}>
+            <Ionicons name="water" size={22} color="#66BB6A" />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
 
-        {/* Menu Grid */}
-        <View style={styles.menuGrid}>
-          {menuItems.map((item) => (
+  const ListFooter = (
+    <View style={styles.footer}>
+      <Text style={styles.footerTitle}>India's</Text>
+      <Text style={styles.footerSubtitle}>milk app ❤️</Text>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <HeaderBar title="Milk Wala" navigation={navigation} />
+      <FlatList
+        data={menuItems}
+        keyExtractor={(item) => String(item.id)}
+        numColumns={2}
+        ListHeaderComponent={ListHeader}
+        ListFooterComponent={ListFooter}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 20 }}
+        columnWrapperStyle={{ justifyContent: 'space-between' }}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => (
+          <View style={{ width: '49%', paddingHorizontal: 4, marginBottom: 12 }}>
             <MenuCard
-              key={item.id}
               title={item.title}
               icon={item.icon}
               color={item.color}
@@ -80,16 +91,9 @@ export default function DashboardScreen({ navigation }) {
                 }
               }}
             />
-          ))}
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerTitle}>India's</Text>
-          <Text style={styles.footerSubtitle}>milk app ❤️</Text>
-        </View>
-        </ScreenContainer>
-      </ScrollView>
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -130,6 +134,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#333',
   },
+  statNumberEmphasis: {
+    fontSize: 20,
+  },
   statIconCircle: {
     width: 34,
     height: 34,
@@ -137,11 +144,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  statIconCircleLarge: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+  },
+  statCardEmphasis: {
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#e5f5ea',
+  },
   menuGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 20,
+    gap: 12,
   },
   footer: {
     alignItems: 'center',

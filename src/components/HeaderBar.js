@@ -3,13 +3,17 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 
 export default function HeaderBar({ title, navigation, right = null, backTo }) {
-  const canGoBack = navigation?.canGoBack?.() || false;
+  const state = navigation?.getState?.();
+  const routeCount = Array.isArray(state?.routes) ? state.routes.length : 0;
+  const canGoBack = (navigation?.canGoBack?.() && routeCount > 1) || false;
   const onLeftPress = () => {
-    if (canGoBack) {
-      if (backTo) return navigation.navigate(backTo);
-      return navigation.goBack();
-    }
-    return navigation?.openDrawer?.();
+    // Prefer explicit back target if provided
+    if (backTo) return navigation?.navigate?.(backTo);
+    // Only call goBack when a previous route truly exists
+    if (canGoBack) return navigation?.goBack?.();
+    // Fallbacks for root screens
+    if (navigation?.openDrawer) return navigation.openDrawer();
+    if (navigation?.navigate) return navigation.navigate('Dashboard');
   };
   return (
     <View style={styles.header}>

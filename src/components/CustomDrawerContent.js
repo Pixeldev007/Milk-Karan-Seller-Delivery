@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,15 +8,31 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
 
 export default function CustomDrawerContent({ navigation }) {
+  const { user, signOut } = useAuth();
+
+  const profile = useMemo(() => {
+    const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'User';
+    const email = user?.email ?? '';
+    const initials = fullName
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'MW';
+
+    return {
+      fullName,
+      email,
+      initials,
+    };
+  }, [user]);
+
   const menuItems = [
     { id: 1, title: 'Dashboard', icon: 'home-outline', route: 'Dashboard' },
-    // Removed: Extra Features
-    { id: 3, title: 'My Subscription', icon: 'crown-outline', route: 'Subscription' },
-    { id: 4, title: 'Rate Us', icon: 'star-outline', route: 'RateUs' },
-    // Removed: Want custom app
-    { id: 6, title: 'Contact Us', icon: 'call-outline', route: 'ContactUs' },
+    { id: 3, title: 'My Subscription', icon: 'ribbon-outline', route: 'Subscription' },
     { id: 8, title: 'Milk Report', icon: 'document-text-outline', route: 'Report' },
     { id: 9, title: 'Settings', icon: 'settings-outline', route: 'Settings' },
     { id: 7, title: 'Logout', icon: 'log-out-outline', route: 'Logout' },
@@ -35,12 +51,11 @@ export default function CustomDrawerContent({ navigation }) {
       {/* Profile Section */}
       <View style={styles.profileSection}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>PS</Text>
+          <Text style={styles.avatarText}>{profile.initials}</Text>
         </View>
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>Pooja Suresh</Text>
-          <Text style={styles.profilePhone}>7358968480</Text>
-          <Text style={styles.profileLocation}>sanganoor Coimbatore</Text>
+          <Text style={styles.profileName}>{profile.fullName}</Text>
+          {!!profile.email && <Text style={styles.profileEmail}>{profile.email}</Text>}
         </View>
       </View>
 
@@ -50,8 +65,12 @@ export default function CustomDrawerContent({ navigation }) {
           <TouchableOpacity
             key={item.id}
             style={styles.menuItem}
-            onPress={() => {
-              // Navigate to known routes that exist in the drawer
+            onPress={async () => {
+              if (item.route === 'Logout') {
+                await signOut();
+                return;
+              }
+
               if (['Dashboard', 'Subscription', 'Report', 'Settings'].includes(item.route)) {
                 navigation.navigate(item.route);
               }
@@ -126,14 +145,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 4,
   },
-  profilePhone: {
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 2,
-  },
-  profileLocation: {
+  profileEmail: {
     fontSize: 14,
-    color: '#fff',
+    color: '#E8F5E9',
+    marginBottom: 2,
   },
   menuContainer: {
     flex: 1,

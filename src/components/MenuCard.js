@@ -1,23 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
-// On web, the drawer is permanent with width ~280, so the content area is narrower than the window
-const DRAWER_WIDTH_WEB = 280;
-const GRID_GUTTER = 16; // matches paddingHorizontal in DashboardScreen.menuGrid
-const CARD_MARGIN = 8;  // matches styles.card margin
-
-const availableWidth = Platform.OS === 'web' ? Math.max(320, width - DRAWER_WIDTH_WEB) : width;
-const isDesktop = availableWidth >= 768;
-const cols = isDesktop ? 4 : 2;
-
-// Total horizontal non-card width = left/right grid padding + outer card margins + gaps between cards
-// grid padding: 2 * GRID_GUTTER
-// outer margins: CARD_MARGIN * 2 (leftmost + rightmost)
-// gaps between cards: (cols - 1) * (CARD_MARGIN * 2) because each adjacent card contributes its margin
-const totalNonCard = (GRID_GUTTER * 2) + (CARD_MARGIN * 2) + ((cols - 1) * (CARD_MARGIN * 2));
-const cardWidth = (availableWidth - totalNonCard) / cols;
 
 export default function MenuCard({ title, icon, color, badge, onPress }) {
   return (
@@ -30,32 +13,36 @@ export default function MenuCard({ title, icon, color, badge, onPress }) {
       <View style={[styles.iconContainer, { backgroundColor: color }]}>
         <Ionicons name={icon} size={40} color="#fff" />
       </View>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: cardWidth,
+    width: '100%',
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    margin: 8,
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    marginBottom: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 3,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    minHeight: 150,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    borderWidth: 1,
+    borderColor: '#ECECEC',
+    height: 128,
     position: 'relative',
+    overflow: 'hidden',
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -65,6 +52,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
+    includeFontPadding: false,
+    paddingTop: 0,
+    marginTop: 8,
+    numberOfLines: 1,
   },
   badge: {
     position: 'absolute',

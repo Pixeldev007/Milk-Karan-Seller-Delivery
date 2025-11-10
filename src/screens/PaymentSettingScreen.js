@@ -1,38 +1,95 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform, TextInput, TouchableOpacity, FlatList, Modal, Pressable, Alert } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Platform, TextInput, TouchableOpacity, FlatList, Modal, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { listPayments, createPayment as recordPayment } from '../lib/payments';
+import { listInvoiceSummaries } from '../lib/invoices';
+import { getCustomers } from '../lib/customers';
 
 export default function PaymentSettingScreen() {
-  const [payments, setPayments] = React.useState([
-    { id: 'PMT-1001', invoiceId: 'INV-0001', amount: 500, mode: 'Cash', date: '2025-10-01' },
-    { id: 'PMT-1002', invoiceId: 'INV-0002', amount: 750, mode: 'Online', date: '2025-10-10' },
-  ]);
-  const [invoices] = React.useState([
-    { id: 'INV-0001', total: 500 },
-    { id: 'INV-0002', total: 750 },
-    { id: 'INV-0003', total: 1200 },
-  ]);
-  const [showForm, setShowForm] = React.useState(false);
-  const [form, setForm] = React.useState({ invoiceId: '', amount: '', mode: 'Cash', date: '' });
-  const [showInvoiceList, setShowInvoiceList] = React.useState(false);
+  const [payments, setPayments] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ invoiceId: '', customerId: '', amount: '', mode: 'Cash', date: '' });
+  const [showInvoiceList, setShowInvoiceList] = useState(false);
+  const [showCustomerList, setShowCustomerList] = useState(false);
 
-  const resetForm = () => setForm({ invoiceId: '', amount: '', mode: 'Cash', date: '' });
+  const resetForm = () => setForm({ invoiceId: '', customerId: '', amount: '', mode: 'Cash', date: '' });
 
-  const createPayment = () => {
-    if (!form.invoiceId) return Alert.alert('Missing Invoice', 'Please select an invoice.');
-    const amountNum = parseFloat(form.amount);
-    if (!amountNum || amountNum <= 0) return Alert.alert('Invalid Amount', 'Please enter a valid amount.');
-    const id = `PMT-${(1000 + payments.length + 1).toString()}`;
-    const date = form.date || new Date().toISOString().slice(0, 10);
-    setPayments(prev => [{ id, invoiceId: form.invoiceId, amount: amountNum, mode: form.mode, date }, ...prev]);
-    setShowForm(false);
-    resetForm();
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [paymentRows, invoiceRows, customerResult] = await Promise.all([
+        listPayments(),
+        listInvoiceSummaries(),
+        getCustomers(),
+      ]);
+
+      if (customerResult.error) {
+        throw customerResult.error;
+      }
+
+      const customerMap = new Map((customerResult.data || []).map((c) => [c.id, c.name]));
+
+      const formatted = paymentRows.map((p) => ({
+        id: p.id,
+        invoiceId: p.invoice?.id ? p.invoice.invoice_number ?? p.invoice.id : null,
+        invoiceDbId: p.invoice_id,
+        customerId: p.customer?.id ?? null,
+        customerName: p.customer?.name ?? (p.customer_id ? customerMap.get(p.customer_id) : ''),
+        amount: Number(p.amount),
+        mode: p.mode,
+        date: p.payment_date,
+      }));
+
+      setPayments(formatted);
+      setInvoices(invoiceRows);
+      setCustomers(customerResult.data || []);
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to load payments.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const onSubmit = () => {
+    if (!form.invoiceId && !form.customerId) {
+      Alert.alert('Missing fields', 'Select an invoice or customer.');
+      return;
+    }
+    const amountNum = Number.parseFloat(form.amount);
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      Alert.alert('Invalid Amount', 'Please enter a valid amount.');
+      return;
+    }
+    (async () => {
+      try {
+        const payload = {
+          invoiceId: form.invoiceId || null,
+          customerId: form.customerId,
+          amount: amountNum,
+          date: form.date || new Date().toISOString().slice(0, 10),
+          mode: form.mode,
+        };
+        await recordPayment(payload);
+        setShowForm(false);
+        resetForm();
+        await loadData();
+      } catch (error) {
+        Alert.alert('Save failed', error.message || 'Unable to record payment.');
+      }
+    })();
   };
 
   const renderPayment = ({ item }) => (
     <View style={styles.cardRow}>
       <View style={{ flex: 1 }}>
-        <Text style={styles.cardTitle}>{item.invoiceId}</Text>
-        <Text style={styles.cardSub}>ID: {item.id} • {item.mode}</Text>
+        <Text style={styles.cardTitle}>{item.invoiceId || 'Direct Payment'}</Text>
+        <Text style={styles.cardSub}>{item.customerName ? `${item.customerName} • ` : ''}ID: {item.id} • {item.mode}</Text>
       </View>
       <View style={{ alignItems: 'flex-end' }}>
         <Text style={styles.amount}>₹{item.amount}</Text>
@@ -51,13 +108,24 @@ export default function PaymentSettingScreen() {
       </View>
 
       <View style={styles.body}>
-        <FlatList
-          data={payments}
-          keyExtractor={(it) => it.id}
-          renderItem={renderPayment}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          contentContainerStyle={{ paddingBottom: 24 }}
-        />
+        {loading ? (
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+            <ActivityIndicator size="small" color="#66BB6A" />
+          </View>
+        ) : (
+          <FlatList
+            data={payments}
+            keyExtractor={(it) => it.id}
+            renderItem={renderPayment}
+            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+            contentContainerStyle={{ paddingBottom: 24 }}
+            ListEmptyComponent={() => (
+              <View style={{ alignItems: 'center', marginTop: 40 }}>
+                <Text style={{ color: '#999' }}>No payments found.</Text>
+              </View>
+            )}
+          />
+        )}
       </View>
 
       <Modal visible={showForm} animationType="slide" transparent>
@@ -75,8 +143,32 @@ export default function PaymentSettingScreen() {
             {showInvoiceList && (
               <View style={styles.selectList}>
                 {invoices.map(inv => (
-                  <Pressable key={inv.id} style={styles.selectItem} onPress={() => { setForm(f => ({ ...f, invoiceId: inv.id, amount: String(inv.total) })); setShowInvoiceList(false); }}>
-                    <Text style={styles.selectItemText}>{inv.id} • ₹{inv.total}</Text>
+                  <Pressable key={inv.id} style={styles.selectItem} onPress={() => {
+                    setForm(f => ({ ...f, invoiceId: inv.id, customerId: inv.customer_id || f.customerId, amount: f.amount || '' }));
+                    setShowInvoiceList(false);
+                  }}>
+                    <Text style={styles.selectItemText}>{inv.invoice_number || inv.id}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
+            <Text style={styles.label}>Customer (optional)</Text>
+            <TouchableOpacity style={styles.select} onPress={() => setShowCustomerList((s) => !s)}>
+              <Text style={styles.selectText}>{customers.find((c) => c.id === form.customerId)?.name || 'Select Customer'}</Text>
+            </TouchableOpacity>
+            {showCustomerList && (
+              <View style={styles.selectList}>
+                {customers.map((customer) => (
+                  <Pressable
+                    key={customer.id}
+                    style={styles.selectItem}
+                    onPress={() => {
+                      setForm((f) => ({ ...f, customerId: customer.id }));
+                      setShowCustomerList(false);
+                    }}
+                  >
+                    <Text style={styles.selectItemText}>{customer.name}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -97,7 +189,7 @@ export default function PaymentSettingScreen() {
             <Text style={styles.label}>Date</Text>
             <TextInput style={styles.input} placeholder="YYYY-MM-DD (optional)" value={form.date} onChangeText={(t)=>setForm(s=>({...s, date:t}))} />
 
-            <TouchableOpacity style={styles.saveBtn} onPress={createPayment}><Text style={styles.saveText}>Add Payment</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.saveBtn} onPress={onSubmit}><Text style={styles.saveText}>Add Payment</Text></TouchableOpacity>
           </View>
         </View>
       </Modal>

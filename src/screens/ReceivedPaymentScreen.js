@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Modal, Platform, Alert, Dimensions } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Modal, Platform, Alert, Dimensions, ActivityIndicator } from 'react-native';
 import ScreenContainer from '../components/ScreenContainer';
 import { Ionicons } from '@expo/vector-icons';
+import { listPayments } from '../lib/payments';
 
 // Layout constants for web modal sizing
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
@@ -12,13 +13,33 @@ const MODAL_MAX_WIDTH = 640; // smaller modal width on large screens
 
 export default function ReceivedPaymentScreen() {
   const [query, setQuery] = useState('');
-  const [rows, setRows] = useState([
-    { id: '1', customer: 'Ravi Kumar', amount: 300, date: '2025-10-15', mode: 'Cash' },
-    { id: '2', customer: 'Anita Sharma', amount: 150, date: '2025-10-16', mode: 'Online' },
-  ]);
-
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [form, setForm] = useState({ customer: '', amount: '', date: '', mode: 'Cash' });
+
+  const loadPayments = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await listPayments();
+      const mapped = data.map((p) => ({
+        id: p.id,
+        customer: p.customer?.name || 'Unknown',
+        amount: Number(p.amount) || 0,
+        date: p.payment_date,
+        mode: p.mode,
+      }));
+      setRows(mapped);
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to load payments.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPayments();
+  }, [loadPayments]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -68,9 +89,9 @@ export default function ReceivedPaymentScreen() {
           <Ionicons name="search" size={18} color="#999" />
           <TextInput style={styles.searchInput} placeholder="Search by name, date, mode" value={query} onChangeText={setQuery} />
         </View>
-        <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
-          <Ionicons name="add-circle-outline" size={18} color="#fff" />
-          <Text style={styles.addText}>Add Payment</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={loadPayments}>
+          <Ionicons name="refresh" size={18} color="#fff" />
+          <Text style={styles.addText}>Refresh</Text>
         </TouchableOpacity>
       </View>
 
@@ -82,45 +103,26 @@ export default function ReceivedPaymentScreen() {
         <Text style={[styles.hcell, { flex: 1 }]}>Mode</Text>
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      />
+      {loading ? (
+        <View style={{ paddingVertical: 32, alignItems: 'center' }}>
+          <ActivityIndicator size="small" color="#66BB6A" />
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          ListEmptyComponent={() => (
+            <View style={{ alignItems: 'center', marginTop: 40 }}>
+              <Text style={{ color: '#999' }}>No payments found.</Text>
+            </View>
+          )}
+        />
+      )}
       </ScreenContainer>
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add Payment</Text>
-
-            <TextInput style={styles.input} placeholder="Customer name" value={form.customer} onChangeText={(t) => setForm((s) => ({ ...s, customer: t }))} />
-            <TextInput style={styles.input} placeholder="Amount" keyboardType="decimal-pad" value={form.amount} onChangeText={(t) => setForm((s) => ({ ...s, amount: t }))} />
-            <TextInput style={styles.input} placeholder="Date (YYYY-MM-DD)" value={form.date} onChangeText={(t) => setForm((s) => ({ ...s, date: t }))} />
-
-            <View style={styles.toggleRow}>
-              <Text style={styles.toggleLabel}>Mode</Text>
-              <View style={styles.toggleGroup}>
-                {['Cash', 'Online'].map((m) => (
-                  <TouchableOpacity key={m} style={[styles.toggleBtn, form.mode === m && styles.toggleBtnActive]} onPress={() => setForm((s) => ({ ...s, mode: m }))}>
-                    <Text style={[styles.toggleText, form.mode === m && styles.toggleTextActive]}>{m}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)}>
-                <Text style={[styles.modalBtnText, { color: '#333' }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={saveForm}>
-                <Text style={[styles.modalBtnText, { color: '#fff' }]}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Legacy modal omitted since payments are now read-only */}
     </View>
   );
 }

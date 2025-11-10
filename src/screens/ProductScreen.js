@@ -1,9 +1,9 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Modal, Platform, Alert, Dimensions, ScrollView } from 'react-native';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Modal, Platform, Alert, Dimensions, ScrollView, ActivityIndicator } from 'react-native';
 import ScreenContainer from '../components/ScreenContainer';
 import HeaderBar from '../components/HeaderBar';
-import { supabase } from '../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
+import { listProducts, createProduct, updateProduct, removeProduct } from '../lib/products';
 
 // Layout constants for web modal sizing
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
@@ -14,9 +14,7 @@ const MODAL_MAX_WIDTH = 640; // smaller modal width on large screens
 
 export default function ProductScreen({ navigation }) {
   const [query, setQuery] = useState('');
-  const [products, setProducts] = useState([
-    // Fallback local placeholders; will be replaced by Supabase fetch
-  ]);
+  const [products, setProducts] = useState([]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -39,28 +37,26 @@ export default function ProductScreen({ navigation }) {
     );
   }, [products, query]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-      // Try to fetch common columns; map to a unified shape
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, unit, base_price, price, price_per_unit')
-        .order('name', { ascending: true });
-      if (error) throw error;
-      const mapped = (data || []).map((p) => ({
+      const records = await listProducts();
+      const mapped = records.map((p) => ({
         id: p.id,
         name: p.name,
-        unit: p.unit || 'Litre',
-        price: Number(p.base_price ?? p.price ?? p.price_per_unit ?? 0) || 0,
+        unit: p.unit,
+        price: Number(p.price) || 0,
       }));
       setProducts(mapped);
+      setConnState({ checked: true, ok: true, msg: 'Connected' });
     } catch (e) {
       console.log('[products fetch error]', e?.message);
+      setConnState({ checked: true, ok: false, msg: e?.message || 'Unable to load products' });
+      Alert.alert('Error', e?.message || 'Failed to fetch products from Supabase.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const openAdd = () => {
     setEditingId(null);
@@ -76,21 +72,12 @@ export default function ProductScreen({ navigation }) {
           setConnState({ checked: true, ok: false, msg: 'Missing EXPO_PUBLIC_SUPABASE_* env vars' });
           return;
         }
-        const { error } = await supabase.from('products').select('id', { count: 'exact', head: true });
-        if (!error) {
-          setConnState({ checked: true, ok: true, msg: 'Connected' });
-          await fetchProducts();
-        } else {
-          // If we reached Supabase but table is missing, still consider connection OK
-          const reached = /relation|table .* does not exist|not exist/i.test(error.message || '');
-          setConnState({ checked: true, ok: reached, msg: error.message });
-          if (reached) await fetchProducts();
-        }
+        await fetchProducts();
       } catch (e) {
         setConnState({ checked: true, ok: false, msg: e?.message || 'Unknown error' });
       }
     })();
-  }, []);
+  }, [fetchProducts]);
 
   const openEdit = (item) => {
     setEditingId(item.id);
@@ -103,7 +90,7 @@ export default function ProductScreen({ navigation }) {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
           try {
-            await supabase.from('products').delete().eq('id', id);
+            await removeProduct(id);
             await fetchProducts();
           } catch (e) {
             console.log('[delete product error]', e?.message);
@@ -113,7 +100,7 @@ export default function ProductScreen({ navigation }) {
   };
 
   const saveForm = () => {
-    const priceNum = parseFloat(form.price);
+    const priceNum = Number.parseFloat(form.price);
     if (!form.name.trim() || !form.unit.trim() || !Number.isFinite(priceNum)) {
       Alert.alert('Invalid input', 'Please enter name, unit and numeric price.');
       return;
@@ -121,16 +108,9 @@ export default function ProductScreen({ navigation }) {
     (async () => {
       try {
         if (editingId) {
-          const { error } = await supabase
-            .from('products')
-            .update({ name: form.name, unit: form.unit, base_price: priceNum })
-            .eq('id', editingId);
-          if (error) throw error;
+          await updateProduct(editingId, { name: form.name, unit: form.unit, price: priceNum });
         } else {
-          const { error } = await supabase
-            .from('products')
-            .insert([{ name: form.name, unit: form.unit, base_price: priceNum }]);
-          if (error) throw error;
+          await createProduct({ name: form.name, unit: form.unit, price: priceNum });
         }
         setModalVisible(false);
         await fetchProducts();
@@ -146,10 +126,7 @@ export default function ProductScreen({ navigation }) {
     if (exists) return Alert.alert('Already added', `${v.name} is already in your list.`);
     (async () => {
       try {
-        const { error } = await supabase
-          .from('products')
-          .insert([{ name: v.name, unit: v.unit, base_price: v.price ?? 0 }]);
-        if (error) throw error;
+        await createProduct({ name: v.name, unit: v.unit, price: v.price ?? 0 });
         await fetchProducts();
       } catch (e) {
         Alert.alert('Add failed', e?.message || 'Unknown error');
@@ -195,6 +172,11 @@ export default function ProductScreen({ navigation }) {
       )}
 
       <ScreenContainer>
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="small" color="#66BB6A" />
+        </View>
+      )}
       <View style={styles.toolbar}>
         <View style={styles.searchBox}>
           <Ionicons name="search" size={18} color="#999" />
@@ -277,4 +259,5 @@ const styles = StyleSheet.create({
   modalBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 },
   cancelBtn: { backgroundColor: '#f1f1f1' },
   saveBtn: { backgroundColor: '#66BB6A' },
+  loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center', paddingVertical: 8, zIndex: 1 },
 });

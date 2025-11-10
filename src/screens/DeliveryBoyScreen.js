@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,12 @@ import {
   Dimensions,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenContainer from '../components/ScreenContainer';
+import { listDeliveryAgents, saveDeliveryAgent, deleteDeliveryAgent, replaceAssignments, listAssignments } from '../lib/delivery';
+import { getCustomers } from '../lib/customers';
 
 // Layout constants for web modal sizing
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
@@ -24,23 +27,15 @@ const MODAL_MAX_WIDTH = 640; // smaller modal width on large screens
 
 export default function DeliveryBoyScreen() {
   const [query, setQuery] = useState('');
-  const [deliveryBoys, setDeliveryBoys] = useState([
-    { id: '1', name: 'Suresh', phone: '9876100001', area: 'Ganapathy', customers: ['1'] },
-    { id: '2', name: 'Mahesh', phone: '9876100002', area: 'RS Puram', customers: [] },
-  ]);
-
-  // For demo assignment, a local customer master list (IDs should match MyCustomerScreen seed where possible)
-  const customerMaster = [
-    { id: '1', name: 'Ravi Kumar' },
-    { id: '2', name: 'Anita Sharma' },
-    { id: '3', name: 'Karthik' },
-  ];
+  const [deliveryBoys, setDeliveryBoys] = useState([]);
+  const [customerMaster, setCustomerMaster] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [assignVisible, setAssignVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: '', phone: '', area: '' });
-  const [assignState, setAssignState] = useState({ targetId: null, selected: {} });
+  const [assignSelection, setAssignSelection] = useState({});
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -49,58 +44,104 @@ export default function DeliveryBoyScreen() {
         d.name.toLowerCase().includes(q) ||
         d.phone.toLowerCase().includes(q) ||
         d.area.toLowerCase().includes(q)
+        || (d.loginId ?? '').toLowerCase().includes(q)
     );
   }, [deliveryBoys, query]);
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [agents, customersResult] = await Promise.all([listDeliveryAgents(), getCustomers()]);
+      if (customersResult.error) {
+        throw customersResult.error;
+      }
+      const customerRecords = customersResult.data || [];
+      const customerList = customerRecords.map((c) => ({ id: c.id, name: c.name }));
+
+      const agentsWithAssignments = await Promise.all(
+        agents.map(async (agent) => {
+          const assignments = await listAssignments(agent.id);
+          return {
+            id: agent.id,
+            name: agent.name,
+            phone: agent.phone,
+            area: agent.area ?? '',
+            loginId: agent.login_id ?? agent.phone ?? '',
+            customers: assignments.map((a) => a.customer_id),
+          };
+        })
+      );
+
+      agentsWithAssignments.sort((a, b) => a.name.localeCompare(b.name));
+      setDeliveryBoys(agentsWithAssignments);
+      setCustomerMaster(customerList);
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to load delivery agents.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const openAdd = () => {
     setEditingId(null);
     setForm({ name: '', phone: '', area: '' });
+    setAssignSelection({});
+    setShowCustomerDropdown(false);
     setModalVisible(true);
   };
 
   const openEdit = (item) => {
+    const selected = {};
+    (item.customers || []).forEach((cid) => (selected[cid] = true));
     setEditingId(item.id);
-    setForm({ name: item.name, phone: item.phone, area: item.area });
+    setForm({
+      name: item.name,
+      phone: item.phone,
+      area: item.area,
+    });
+    setAssignSelection(selected);
+    setShowCustomerDropdown(false);
     setModalVisible(true);
   };
 
   const saveForm = () => {
     const { name, phone, area } = form;
-    if (!name.trim() || !phone.trim() || !area.trim()) {
-      Alert.alert('Missing info', 'Please fill all fields.');
+    if (!name.trim() || !phone.trim()) {
+      Alert.alert('Missing info', 'Please fill name and phone.');
       return;
     }
-    if (editingId) {
-      setDeliveryBoys((prev) => prev.map((d) => (d.id === editingId ? { ...d, name, phone, area } : d)));
-    } else {
-      const newId = (Math.max(0, ...deliveryBoys.map((d) => parseInt(d.id, 10))) + 1).toString();
-      setDeliveryBoys((prev) => [...prev, { id: newId, name, phone, area, customers: [] }]);
-    }
-    setModalVisible(false);
+    const loginId = phone.trim();
+    const selectedCustomerIds = Object.keys(assignSelection).filter((cid) => assignSelection[cid]);
+    (async () => {
+      try {
+        const agent = await saveDeliveryAgent({ id: editingId, name, phone, area, loginId });
+        await replaceAssignments(agent.id, selectedCustomerIds);
+        setModalVisible(false);
+        setForm({ name: '', phone: '', area: '' });
+        setAssignSelection({});
+        await loadData();
+      } catch (error) {
+        Alert.alert('Save failed', error.message || 'Unable to save delivery agent.');
+      }
+    })();
   };
 
   const handleDelete = (id) => {
     Alert.alert('Delete Delivery Boy', 'Are you sure you want to delete this entry?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => setDeliveryBoys((prev) => prev.filter((d) => d.id !== id)) },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+          try {
+            await deleteDeliveryAgent(id);
+            await loadData();
+          } catch (error) {
+            Alert.alert('Delete failed', error.message || 'Unable to delete delivery agent.');
+          }
+        } },
     ]);
-  };
-
-  const openAssign = (item) => {
-    const selected = {};
-    (item.customers || []).forEach((cid) => (selected[cid] = true));
-    setAssignState({ targetId: item.id, selected });
-    setAssignVisible(true);
-  };
-
-  const toggleAssign = (cid) => {
-    setAssignState((s) => ({ ...s, selected: { ...s.selected, [cid]: !s.selected[cid] } }));
-  };
-
-  const saveAssign = () => {
-    const assigned = Object.keys(assignState.selected).filter((cid) => assignState.selected[cid]);
-    setDeliveryBoys((prev) => prev.map((d) => (d.id === assignState.targetId ? { ...d, customers: assigned } : d)));
-    setAssignVisible(false);
   };
 
   const renderItem = ({ item }) => (
@@ -109,16 +150,22 @@ export default function DeliveryBoyScreen() {
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.sub}>📞 {item.phone}</Text>
         <Text style={styles.sub}>🗺️ {item.area}</Text>
-        <Text style={styles.subSmall}>Assigned customers: {item.customers?.length || 0}</Text>
+        {!!item.loginId && <Text style={styles.sub}>🆔 User ID: {item.loginId}</Text>}
+        <Text style={styles.subSmall}>
+          Assigned customers: {item.customers?.length || 0}
+          {item.customers?.length
+            ? ` • ${item.customers
+                .map((cid) => customerMaster.find((c) => c.id === cid)?.name)
+                .filter(Boolean)
+                .slice(0, 2)
+                .join(', ')}${item.customers.length > 2 ? '…' : ''}`
+            : ''}
+        </Text>
       </View>
       <View style={styles.actions}>
         <TouchableOpacity style={[styles.actBtn, { backgroundColor: '#E3F2FD' }]} onPress={() => openEdit(item)}>
           <Ionicons name="create-outline" size={18} color="#1976D2" />
           <Text style={[styles.actText, { color: '#1976D2' }]}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actBtn, { backgroundColor: '#FFF3E0' }]} onPress={() => openAssign(item)}>
-          <Ionicons name="people-outline" size={18} color="#EF6C00" />
-          <Text style={[styles.actText, { color: '#EF6C00' }]}>Assign</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.actBtn, { backgroundColor: '#FFEBEE' }]} onPress={() => handleDelete(item.id)}>
           <Ionicons name="trash-outline" size={18} color="#D32F2F" />
@@ -160,10 +207,16 @@ export default function DeliveryBoyScreen() {
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 40 }}
         ListEmptyComponent={() => (
-          <View style={styles.empty}>
-            <Ionicons name="car-outline" size={48} color="#bbb" />
-            <Text style={styles.emptyText}>No delivery boys found</Text>
-          </View>
+          loading ? (
+            <View style={styles.empty}>
+              <ActivityIndicator size="small" color="#66BB6A" />
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <Ionicons name="car-outline" size={48} color="#bbb" />
+              <Text style={styles.emptyText}>No delivery boys found</Text>
+            </View>
+          )
         )}
       />
       </ScreenContainer>
@@ -193,6 +246,48 @@ export default function DeliveryBoyScreen() {
               value={form.area}
               onChangeText={(t) => setForm((s) => ({ ...s, area: t }))}
             />
+            <Text style={styles.label}>Assigned customers</Text>
+
+            <TouchableOpacity
+              style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+              onPress={() => setShowCustomerDropdown((prev) => !prev)}
+            >
+              <Text style={{ color: '#333' }}>
+                {Object.keys(assignSelection).some((cid) => assignSelection[cid])
+                  ? `${Object.keys(assignSelection).filter((cid) => assignSelection[cid]).length} customer(s) selected`
+                  : 'Assign customers'}
+              </Text>
+              <Ionicons name={showCustomerDropdown ? 'chevron-up' : 'chevron-down'} size={18} color="#666" />
+            </TouchableOpacity>
+            {showCustomerDropdown && (
+              <View style={styles.dropdownList}>
+                <ScrollView style={{ maxHeight: 200 }}>
+                  {customerMaster.map((customer) => {
+                    const checked = !!assignSelection[customer.id];
+                    return (
+                      <TouchableOpacity
+                        key={customer.id}
+                        style={styles.dropdownRow}
+                        onPress={() =>
+                          setAssignSelection((prev) => ({
+                            ...prev,
+                            [customer.id]: !prev[customer.id],
+                          }))
+                        }
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons
+                          name={checked ? 'checkbox' : 'square-outline'}
+                          size={20}
+                          color={checked ? '#2e7d32' : '#777'}
+                        />
+                        <Text style={styles.dropdownText}>{customer.name}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
 
             <View style={styles.modalActions}>
               <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)}>
@@ -206,43 +301,6 @@ export default function DeliveryBoyScreen() {
         </View>
       </Modal>
 
-      {/* Assign Customers Modal */}
-      <Modal visible={assignVisible} animationType="fade" transparent>
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
-            <Text style={styles.modalTitle}>Assign Customers</Text>
-            <ScrollView style={{ maxHeight: 300 }}>
-              {customerMaster.map((c) => {
-                const checked = !!assignState.selected[c.id];
-                return (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={styles.assignRow}
-                    onPress={() => toggleAssign(c.id)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name={checked ? 'checkbox' : 'square-outline'}
-                      size={22}
-                      color={checked ? '#2e7d32' : '#777'}
-                    />
-                    <Text style={styles.assignText}>{c.name}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setAssignVisible(false)}>
-                <Text style={[styles.modalBtnText, { color: '#333' }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={saveAssign}>
-                <Text style={[styles.modalBtnText, { color: '#fff' }]}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -405,13 +463,21 @@ const styles = StyleSheet.create({
   saveBtn: {
     backgroundColor: '#66BB6A',
   },
-  assignRow: {
+  dropdownList: {
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    marginTop: 8,
+  },
+  dropdownRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingVertical: 10,
+    paddingHorizontal: 12,
   },
-  assignText: {
+  dropdownText: {
     fontSize: 14,
     color: '#333',
   },

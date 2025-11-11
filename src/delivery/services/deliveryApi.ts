@@ -49,13 +49,36 @@ export async function fetchAssignments(params?: { from?: string; to?: string; ag
   // Try selecting full schema first
   try {
     let query = supabase
-      .from('delivery_assignments')
+      .from('delivery_assignments_view')
       .select('id,owner_id,delivery_agent_id,customer_id,date,shift,liters,delivered,assigned_at,unassigned_at');
     if (params?.from) query = query.gte('date', params.from);
     if (params?.to) query = query.lte('date', params.to);
     if (params?.agentId) query = query.eq('delivery_agent_id', params.agentId);
     const { data, error } = await query.order('date', { ascending: true }).order('shift', { ascending: true });
     if (error) throw error;
+    // If no daily rows exist yet, fallback to base table to show raw assignments
+    if (!data || data.length === 0) {
+      let q2 = supabase
+        .from('delivery_assignments')
+        .select('id,owner_id,delivery_agent_id,customer_id,assigned_at,unassigned_at');
+      const { data: base, error: e2 } = await q2.order('assigned_at', { ascending: false });
+      if (e2) throw e2;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const iso = today.toISOString().slice(0, 10);
+      return (base || []).map((r: any) => ({
+        id: r.id,
+        ownerId: r.owner_id,
+        customerId: r.customer_id,
+        deliveryAgentId: r.delivery_agent_id,
+        date: iso,
+        shift: 'morning',
+        liters: 0,
+        delivered: false,
+        assignedAt: r.assigned_at,
+        unassignedAt: r.unassigned_at ?? null,
+      }));
+    }
     return (data || []).map((r: any) => ({
       id: r.id,
       ownerId: r.owner_id,
@@ -123,12 +146,21 @@ export async function insertAssignment(payload: Omit<Assignment, 'id' | 'assigne
   };
 }
 
-export async function updateAssignment(assignmentId: string, patch: Partial<Pick<Assignment, 'liters' | 'delivered'>>): Promise<void> {
+export async function setDeliveryStatus(
+  assignmentId: string,
+  date: string,
+  shift: Assignment['shift'],
+  delivered: boolean,
+  liters?: number,
+): Promise<void> {
   if (!SUPABASE_CONFIGURED || !supabase) return;
-  const { error } = await supabase
-    .from('delivery_assignments')
-    .update({ liters: patch.liters, delivered: patch.delivered })
-    .eq('id', assignmentId);
+  const { error } = await supabase.rpc('set_delivery_status', {
+    p_assignment_id: assignmentId,
+    p_date: date,
+    p_shift: shift,
+    p_delivered: delivered,
+    p_liters: liters ?? null,
+  });
   if (error) throw error;
 }
 

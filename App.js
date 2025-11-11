@@ -39,6 +39,7 @@ import BillSettingScreen from './src/screens/BillSettingScreen';
 import InvoiceScreen from './src/screens/InvoiceScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import DeliveryLoginScreen from './src/screens/DeliveryLoginScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 if (__DEV__) {
@@ -115,13 +116,14 @@ function AuthStackNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="DeliveryLogin" component={DeliveryLoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
     </Stack.Navigator>
   );
 }
 
 function RootNavigator() {
-  const { session, initializing } = useAuth();
+  const { session, initializing, role, deliveryAgent } = useAuth();
 
   if (initializing) {
     return (
@@ -131,6 +133,10 @@ function RootNavigator() {
     );
   }
 
+  if (role === 'delivery' || !!deliveryAgent) {
+    const DeliveryNavigator = require('./src/navigation/DeliveryNavigator').default;
+    return <DeliveryNavigator />;
+  }
   return session ? <DrawerNavigator /> : <AuthStackNavigator />;
 }
 

@@ -14,6 +14,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [initializing, setInitializing] = useState(true);
   const [authError, setAuthError] = useState(null);
+  const [deliveryAgent, setDeliveryAgent] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -65,12 +66,37 @@ export function AuthProvider({ children }) {
     () => ({
       session,
       user: session?.user ?? null,
+      // role is derived from Supabase user metadata if present, otherwise from deliveryAgent local login
+      role: session?.user?.user_metadata?.role ?? (deliveryAgent ? 'delivery' : null),
+      deliveryAgent,
       initializing,
       signIn: async ({ email, password }) => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           throw new Error(error.message);
         }
+      },
+      // Delivery login by name + phone (no Supabase Auth account required)
+      deliverySignInByNamePhone: async ({ name, phone }) => {
+        const normalizedName = (name || '').trim();
+        const normalizedPhone = (phone || '').replace(/\s+/g, '');
+        if (!normalizedName || !normalizedPhone) {
+          throw new Error('Name and phone are required');
+        }
+        const { data, error } = await supabase
+          .from('delivery_agents')
+          .select('*')
+          .eq('name', normalizedName)
+          .eq('phone', normalizedPhone)
+          .limit(1)
+          .maybeSingle();
+        if (error) {
+          throw new Error(error.message);
+        }
+        if (!data) {
+          throw new Error('Invalid name or phone number');
+        }
+        setDeliveryAgent(data);
       },
       signUp: async ({ email, password, fullName }) => {
         const { error } = await supabase.auth.signUp({
@@ -85,13 +111,19 @@ export function AuthProvider({ children }) {
         }
       },
       signOut: async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          throw new Error(error.message);
+        // Clear both Supabase session (if any) and deliveryAgent local session
+        try {
+          const { error } = await supabase.auth.signOut();
+          if (error) {
+            // ignore if user was not signed in via Supabase email/password
+            // still proceed to clear local state
+          }
+        } finally {
+          setDeliveryAgent(null);
         }
       },
     }),
-    [session, initializing]
+    [session, initializing, deliveryAgent]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

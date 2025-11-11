@@ -12,24 +12,24 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 
-export default function LoginScreen() {
+export default function DeliveryLoginScreen() {
   const navigation = useNavigation();
-  const { signIn } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { deliverySignInByNamePhone } = useAuth();
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    if (!email.trim() || !password) {
-      setError('Please enter both email and password.');
+    if (!name.trim() || !phone.trim()) {
+      setError('Please enter both name and phone number.');
       return;
     }
 
     setLoading(true);
     setError('');
     try {
-      await signIn({ email: email.trim(), password });
+      await deliverySignInByNamePhone({ name: name.trim(), phone: phone.trim() });
     } catch (err) {
       setError(err.message ?? 'Unable to sign in. Please try again.');
     } finally {
@@ -43,32 +43,31 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.card}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue managing your dairy business.</Text>
+        <Text style={styles.title}>Delivery Boy Login</Text>
+        <Text style={styles.subtitle}>Enter your Name and Phone given by your Seller.</Text>
 
         {!!error && <Text style={styles.error}>{error}</Text>}
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>Name</Text>
           <TextInput
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
             autoCorrect={false}
-            placeholder="you@example.com"
+            placeholder="e.g. Ramesh Kumar"
             style={styles.input}
             editable={!loading}
           />
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>Phone Number</Text>
           <TextInput
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholder="Enter your password"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            placeholder="e.g. 9876543210"
             style={styles.input}
             editable={!loading}
           />
@@ -79,25 +78,13 @@ export default function LoginScreen() {
           onPress={handleLogin}
           disabled={loading}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.primaryButtonText}>Sign In as Seller</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.secondaryButton, loading && styles.primaryButtonDisabled]}
-          onPress={() => navigation.navigate('DeliveryLogin')}
-          disabled={loading}
-        >
-          <Text style={styles.secondaryButtonText}>Login as Delivery Boy</Text>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Sign In</Text>}
         </TouchableOpacity>
 
         <View style={styles.footerRow}>
-          <Text style={styles.footerText}>New to Milk Wala?</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')} disabled={loading}>
-            <Text style={styles.footerLink}>Create an account</Text>
+          <Text style={styles.footerText}>Want to login as Seller?</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')} disabled={loading}>
+            <Text style={styles.footerLink}>Go to Seller Login</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -154,7 +141,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
   },
   primaryButton: {
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#2E7D32',
     borderRadius: 10,
     paddingVertical: 16,
     alignItems: 'center',
@@ -166,18 +153,6 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: '#fff',
     fontSize: 17,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    backgroundColor: '#1B5E20',
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  secondaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
     fontWeight: '600',
   },
   footerRow: {

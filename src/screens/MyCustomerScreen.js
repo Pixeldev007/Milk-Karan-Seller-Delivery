@@ -31,7 +31,7 @@ export default function MyCustomerScreen() {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ name: '', phone: '', address: '', plan: '', planType: 'Daily' });
+  const [form, setForm] = useState({ name: '', phone: '', address: '', plan: '', planType: 'Daily', preferredShift: 'morning' });
 
   // Load customers from Supabase on mount
   useEffect(() => {
@@ -53,6 +53,7 @@ export default function MyCustomerScreen() {
         address: c.address,
         plan: c.plan,
         planType: c.plan_type || 'Daily',
+        preferredShift: c.preferred_shift || 'morning',
       }));
       setCustomers(mappedCustomers);
     }
@@ -73,13 +74,13 @@ export default function MyCustomerScreen() {
 
   const openAdd = () => {
     setEditingId(null);
-    setForm({ name: '', phone: '', address: '', plan: '', planType: 'Daily' });
+    setForm({ name: '', phone: '', address: '', plan: '', planType: 'Daily', preferredShift: 'morning' });
     setModalVisible(true);
   };
 
   const openEdit = (item) => {
     setEditingId(item.id);
-    setForm({ name: item.name, phone: item.phone, address: item.address, plan: item.plan, planType: item.planType || 'Daily' });
+    setForm({ name: item.name, phone: item.phone, address: item.address, plan: item.plan, planType: item.planType || 'Daily', preferredShift: item.preferredShift || 'morning' });
     setModalVisible(true);
   };
 
@@ -103,7 +104,7 @@ export default function MyCustomerScreen() {
   };
 
   const saveForm = async () => {
-    const { name, phone, address, plan, planType } = form;
+    const { name, phone, address, plan, planType, preferredShift } = form;
     if (!name.trim() || !phone.trim() || !address.trim() || !plan.trim()) {
       Alert.alert('Missing info', 'Please fill all fields.');
       return;
@@ -119,6 +120,7 @@ export default function MyCustomerScreen() {
           address,
           plan,
           planType,
+          preferredShift,
         });
         if (error) {
           Alert.alert('Error', 'Failed to update customer: ' + error.message);
@@ -134,6 +136,7 @@ export default function MyCustomerScreen() {
                     address: data.address,
                     plan: data.plan,
                     planType: data.plan_type || 'Daily',
+                    preferredShift: data.preferred_shift || 'morning',
                   }
                 : c
             )
@@ -148,6 +151,7 @@ export default function MyCustomerScreen() {
           address,
           plan,
           planType,
+          preferredShift,
         });
         if (error) {
           Alert.alert('Error', 'Failed to add customer: ' + error.message);
@@ -161,6 +165,7 @@ export default function MyCustomerScreen() {
               address: data.address,
               plan: data.plan,
               planType: data.plan_type || 'Daily',
+              preferredShift: data.preferred_shift || 'morning',
             },
             ...prev,
           ]);
@@ -181,6 +186,7 @@ export default function MyCustomerScreen() {
         <Text style={styles.sub}>📞 {item.phone}</Text>
         <Text style={styles.sub}>📍 {item.address}</Text>
         <Text style={styles.plan}>Plan: {item.plan} • {item.planType || 'Daily'}</Text>
+        <Text style={styles.sub}>Shift: {item.preferredShift === 'evening' ? 'Evening' : 'Morning'}</Text>
       </View>
       <View style={styles.actions}>
         <TouchableOpacity style={[styles.actBtn, { backgroundColor: '#E3F2FD' }]} onPress={() => openEdit(item)}>
@@ -289,6 +295,25 @@ export default function MyCustomerScreen() {
                   onPress={() => setForm((s) => ({ ...s, planType: 'Seasonal' }))}
                 >
                   <Text style={[styles.toggleText, form.planType === 'Seasonal' && styles.toggleTextActive]}>Seasonal</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Preferred Shift Toggle */}
+            <View style={styles.toggleRow}>
+              <Text style={styles.toggleLabel}>Preferred Shift</Text>
+              <View style={styles.toggleGroup}>
+                <TouchableOpacity
+                  style={[styles.toggleBtn, form.preferredShift === 'morning' && styles.toggleBtnActive]}
+                  onPress={() => setForm((s) => ({ ...s, preferredShift: 'morning' }))}
+                >
+                  <Text style={[styles.toggleText, form.preferredShift === 'morning' && styles.toggleTextActive]}>Morning</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggleBtn, form.preferredShift === 'evening' && styles.toggleBtnActive]}
+                  onPress={() => setForm((s) => ({ ...s, preferredShift: 'evening' }))}
+                >
+                  <Text style={[styles.toggleText, form.preferredShift === 'evening' && styles.toggleTextActive]}>Evening</Text>
                 </TouchableOpacity>
               </View>
             </View>

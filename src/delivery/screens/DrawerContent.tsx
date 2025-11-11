@@ -4,10 +4,12 @@ import { DrawerContentComponentProps, DrawerContentScrollView } from '@react-nav
 import { Colors } from '../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
+import { useAuth } from '../../context/AuthContext';
 
 export const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const [language, setLanguage] = React.useState('en');
   const [open, setOpen] = React.useState(false);
+  const { signOut } = useAuth();
 
   return (
     <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1, paddingBottom: 24 }}>
@@ -25,7 +27,7 @@ export const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       <DrawerItem icon="cart" label="Daily Sell" onPress={() => props.navigation.navigate('DailySell' as never)} />
       <DrawerItem icon="bus" label="My Delivery" onPress={() => props.navigation.navigate('MyDelivery' as never)} />
       <DrawerItem icon="star" label="Rate Us" onPress={() => {}} />
-      <DrawerItem icon="log-out" label="Logout" onPress={() => {}} />
+      <DrawerItem icon="log-out" label="Logout" onPress={async () => { try { await signOut(); } catch {} }} />
 
       <View style={{ flex: 1 }} />
 

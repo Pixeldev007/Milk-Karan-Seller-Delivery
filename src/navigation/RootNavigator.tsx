@@ -1,46 +1,33 @@
 import React from 'react';
-import { NavigationContainer, DefaultTheme, Theme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { DashboardScreen } from '../screens/DashboardScreen';
-import { DailySellScreen } from '../screens/DailySellScreen';
-import { MyPickupScreen } from '../screens/MyPickupScreen';
-import { DrawerContent } from '../screens/DrawerContent';
-import { BillScreen } from '../screens/BillScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
-import { Colors } from '../theme/colors';
-import { MyDeliveryScreen } from '../screens/MyDeliveryScreen';
-import { QRScanScreen } from '../screens/auth/QRScanScreen';
-import { RoleSelectScreen } from '../screens/auth/RoleSelectScreen';
-import { NamePhoneLoginScreen } from '../screens/auth/NamePhoneLoginScreen';
+import DashboardScreen from '../screens/DashboardScreen';
+import DailySellScreen from '../screens/DailySellScreen';
+import DeliveryBoyScreen from '../screens/DeliveryBoyScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import InvoiceScreen from '../screens/InvoiceScreen';
+import CreateBillScreen from '../screens/CreateBillScreen';
+import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
+import DeliveryLoginScreen from '../screens/DeliveryLoginScreen';
 import { useAuth } from '../context/AuthContext';
+import DeliveryNavigator from './DeliveryNavigator';
 
-const Stack = createNativeStackNavigator();
-const Drawer = createDrawerNavigator();
+const Stack = createNativeStackNavigator<any>();
+const SellerStack = createNativeStackNavigator<any>();
 
-const AppTheme: Theme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: Colors.primary,
-    background: Colors.background,
-    card: '#fff',
-    text: '#111827',
-    border: Colors.border,
-    notification: Colors.primary,
-  },
-};
+const AppTheme = DefaultTheme;
 
-function DrawerRoot() {
+function SellerRoot() {
   return (
-    <Drawer.Navigator screenOptions={{ headerShown: false }} drawerContent={(p) => <DrawerContent {...p} /> }>
-      <Drawer.Screen name="Dashboard" component={DashboardScreen} />
-      <Drawer.Screen name="DailySell" component={DailySellScreen} />
-      <Drawer.Screen name="MyPickup" component={MyPickupScreen} />
-      <Drawer.Screen name="MyDelivery" component={MyDeliveryScreen} />
-      <Drawer.Screen name="Bill" component={BillScreen} />
-      <Drawer.Screen name="Settings" component={SettingsScreen} />
-    </Drawer.Navigator>
+    <SellerStack.Navigator screenOptions={{ headerShown: false }}>
+      <SellerStack.Screen name="Dashboard" component={DashboardScreen} />
+      <SellerStack.Screen name="DailySell" component={DailySellScreen} />
+      <SellerStack.Screen name="Delivery" component={DeliveryBoyScreen} />
+      <SellerStack.Screen name="Invoice" component={InvoiceScreen} />
+      <SellerStack.Screen name="CreateBill" component={CreateBillScreen} />
+      <SellerStack.Screen name="Settings" component={SettingsScreen} />
+    </SellerStack.Navigator>
   );
 }
 
@@ -52,12 +39,15 @@ export function RootNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isLoggedIn ? (
           <>
-            <Stack.Screen name="QRScan" component={QRScanScreen} />
-            <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
-            <Stack.Screen name="NamePhoneLogin" component={NamePhoneLoginScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="DeliveryLogin" component={DeliveryLoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
           </>
         ) : (
-          <Stack.Screen name="Main" component={DrawerRoot} />
+          <Stack.Screen
+            name="Main"
+            component={role === 'delivery' ? DeliveryNavigator : SellerRoot}
+          />
         )}
       </Stack.Navigator>
     </NavigationContainer>

@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Switch } from 'react-native';
 import { HeaderBar } from '../components/HeaderBar';
 import { DayTabs, Day } from '../components/DayTabs';
 import { Colors } from '../theme/colors';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { useDelivery, Product } from '../context/DeliveryContext';
-import { Picker } from '@react-native-picker/picker';
+import { setDeliveryStatus } from '../services/deliveryApi';
+import { useAuth } from '../../context/AuthContext';
 
 type Shift = 'morning' | 'evening';
 
@@ -43,35 +44,31 @@ const TableRow: React.FC<{ name: string; assigned: string; delivered: string; pe
 export const MyPickupScreen: React.FC = () => {
   const nav = useNavigation();
   const {
-    customers,
-    deliveryAgents,
     assignments,
-    assignWork,
     toggleDelivered,
     getCustomerById,
     getDeliveryAgentById,
   } = useDelivery();
+  const { deliveryAgent } = useAuth();
+
+  if (!deliveryAgent) {
+    return (
+      <View style={{ flex: 1, backgroundColor: Colors.background }}>
+        <HeaderBar title="My Pickup" onPressMenu={() => nav.dispatch(DrawerActions.openDrawer())} />
+        <View style={{ padding: 16 }}>
+          <Text style={{ color: Colors.text, fontWeight: '700', marginBottom: 6 }}>No delivery profile</Text>
+          <Text style={{ color: Colors.muted }}>Login as a delivery boy to view your assigned pickups.</Text>
+        </View>
+      </View>
+    );
+  }
 
   const days = React.useMemo(() => buildDays(), []);
   const [selectedDayIndex, setSelectedDayIndex] = React.useState(3);
   const [selectedShift, setSelectedShift] = React.useState<Shift>('morning');
   const [notes, setNotes] = React.useState('');
-  const [assignCustomerId, setAssignCustomerId] = React.useState<string>('');
-  const [assignAgentId, setAssignAgentId] = React.useState<string>('');
-  const [assignLiters, setAssignLiters] = React.useState<string>('1');
-  const [selectedAgentFilter, setSelectedAgentFilter] = React.useState<string>('all');
 
-  React.useEffect(() => {
-    if (!assignCustomerId && customers.length) {
-      setAssignCustomerId(customers[0].id);
-    }
-  }, [assignCustomerId, customers]);
-
-  React.useEffect(() => {
-    if (!assignAgentId && deliveryAgents.length) {
-      setAssignAgentId(deliveryAgents[0].id);
-    }
-  }, [assignAgentId, deliveryAgents]);
+  // No assign form; assignments are created by seller. This page only shows and updates delivery status.
 
   const selectedDay = days[selectedDayIndex] ?? days[Math.floor(days.length / 2)];
 
@@ -79,9 +76,11 @@ export const MyPickupScreen: React.FC = () => {
     if (!selectedDay) return [];
     return assignments
       .filter((assignment) => {
-        if (assignment.date !== selectedDay.value) return false;
-        if (assignment.shift !== selectedShift) return false;
-        if (selectedAgentFilter !== 'all' && assignment.deliveryAgentId !== selectedAgentFilter) return false;
+        // If backend has date/shift, filter normally; if missing, let UI selection include it
+        if (assignment.date && assignment.date !== selectedDay.value) return false;
+        if (assignment.shift && assignment.shift !== selectedShift) return false;
+        // Only show assignments for the logged-in delivery agent
+        if (deliveryAgent?.id && assignment.deliveryAgentId !== deliveryAgent.id) return false;
         return true;
       })
       .sort((a, b) => {
@@ -92,7 +91,7 @@ export const MyPickupScreen: React.FC = () => {
         }
         return (customerA?.name || '').localeCompare(customerB?.name || '');
       });
-  }, [assignments, selectedDay, selectedShift, selectedAgentFilter, getCustomerById]);
+  }, [assignments, selectedDay, selectedShift, deliveryAgent?.id, getCustomerById]);
 
   const summary = React.useMemo(() => {
     const base: Record<Product, { assigned: number; delivered: number }> = {
@@ -111,29 +110,7 @@ export const MyPickupScreen: React.FC = () => {
     return base;
   }, [shiftAssignments, getCustomerById]);
 
-  const handleAssignWork = React.useCallback(() => {
-    if (!assignCustomerId || !selectedDay) {
-      Alert.alert('Assign work', 'Please choose a customer and day.');
-      return;
-    }
-    if (!assignAgentId) {
-      Alert.alert('Assign work', 'Please choose a delivery agent.');
-      return;
-    }
-    const liters = parseFloat(assignLiters);
-    if (!Number.isFinite(liters) || liters <= 0) {
-      Alert.alert('Assign work', 'Enter a valid number of liters.');
-      return;
-    }
-    assignWork({
-      customerId: assignCustomerId,
-      deliveryAgentId: assignAgentId,
-      date: selectedDay.value,
-      shift: selectedShift,
-      liters,
-    });
-    setAssignLiters('1');
-  }, [assignCustomerId, assignAgentId, assignLiters, assignWork, selectedDay, selectedShift]);
+  // Assign form removed; only display and update delivery status.
 
   const totalAssigned = summary['Buffalo Milk'].assigned + summary['Cow Milk'].assigned;
   const totalDelivered = summary['Buffalo Milk'].delivered + summary['Cow Milk'].delivered;
@@ -158,17 +135,7 @@ export const MyPickupScreen: React.FC = () => {
           ))}
         </View>
 
-        <View style={styles.filterRow}>
-          <Text style={styles.filterLabel}>Delivery Agent</Text>
-          <View style={styles.filterPicker}>
-            <Picker selectedValue={selectedAgentFilter} onValueChange={(val) => setSelectedAgentFilter(String(val))}>
-              <Picker.Item label="All Agents" value="all" />
-              {deliveryAgents.map((agent) => (
-                <Picker.Item key={agent.id} label={agent.name} value={agent.id} />
-              ))}
-            </Picker>
-          </View>
-        </View>
+        {/* Showing assignments only for the logged-in delivery agent */}
 
         <View style={styles.summaryCard}>
           <TableRow name="PRODUCT" assigned="ASSIGNED" delivered="DELIVERED" pending="PENDING" head />
@@ -187,43 +154,13 @@ export const MyPickupScreen: React.FC = () => {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Assign Work</Text>
-        <View style={styles.card}>
-          <Text style={styles.inputLabel}>Customer</Text>
-          <View style={styles.pickerWrap}>
-            <Picker selectedValue={assignCustomerId} onValueChange={(val) => setAssignCustomerId(String(val))}>
-              {customers.map((customer) => (
-                <Picker.Item key={customer.id} label={`${customer.name} • ${customer.product}`} value={customer.id} />
-              ))}
-            </Picker>
-          </View>
-          <Text style={styles.inputLabel}>Delivery Agent</Text>
-          <View style={styles.pickerWrap}>
-            <Picker selectedValue={assignAgentId} onValueChange={(val) => setAssignAgentId(String(val))}>
-              {deliveryAgents.map((agent) => (
-                <Picker.Item key={agent.id} label={agent.name} value={agent.id} />
-              ))}
-            </Picker>
-          </View>
-          <Text style={styles.inputLabel}>Liters</Text>
-          <TextInput
-            value={assignLiters}
-            onChangeText={setAssignLiters}
-            keyboardType="decimal-pad"
-            style={styles.input}
-            placeholder="Ex: 2.5"
-            placeholderTextColor={Colors.muted}
-          />
-          <TouchableOpacity style={styles.cta} onPress={handleAssignWork}>
-            <Text style={styles.ctaText}>Assign for {selectedShift === 'morning' ? 'Morning' : 'Evening'}</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Assign form removed per requirement */}
 
         <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Assignments</Text>
         {shiftAssignments.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No assignments yet</Text>
-            <Text style={styles.emptySub}>Assign a customer above to start the shift.</Text>
+            <Text style={styles.emptyTitle}>No assignments</Text>
+            <Text style={styles.emptySub}>You have no assignments for this shift/day.</Text>
           </View>
         ) : (
           shiftAssignments.map((assignment) => {
@@ -239,11 +176,28 @@ export const MyPickupScreen: React.FC = () => {
                   <Text style={styles.assignmentMeta}>
                     Agent: {agent?.name ?? 'Unassigned'}
                   </Text>
-                  <Text style={styles.assignmentMeta}>Shift: {selectedShift === 'morning' ? 'Morning' : 'Evening'}</Text>
+                  <Text style={styles.assignmentMeta}>Shift: {(assignment.shift ?? selectedShift) === 'morning' ? 'Morning' : 'Evening'}</Text>
                 </View>
                 <View style={styles.switchWrap}>
                   <Text style={styles.switchLabel}>Delivered</Text>
-                  <Switch value={assignment.delivered} onValueChange={(value) => toggleDelivered(assignment.id, value)} />
+                  <Switch
+                    value={assignment.delivered}
+                    onValueChange={async (value) => {
+                      // Persist via RPC using currently selected day/shift (creates row if needed)
+                      try {
+                        await setDeliveryStatus(
+                          assignment.id,
+                          selectedDay.value,
+                          selectedShift,
+                          value,
+                          assignment.liters,
+                        );
+                      } catch (e) {
+                        // ignore; UI still updates via local state
+                      }
+                      toggleDelivered(assignment.id, value);
+                    }}
+                  />
                 </View>
               </View>
             );

@@ -6,7 +6,7 @@ import {
   fetchCustomers,
   fetchDeliveryAgents,
   insertAssignment,
-  updateAssignment,
+  setDeliveryStatus,
 } from '../services/deliveryApi';
 
 type Shift = Assignment['shift'];
@@ -124,8 +124,9 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
   const toggleDelivered = React.useCallback(async (assignmentId: string, delivered?: boolean) => {
     const current = assignments.find((a) => a.id === assignmentId);
     const nextVal = delivered ?? !current?.delivered;
-    if (SUPABASE_CONFIGURED && supabase) {
-      await updateAssignment(assignmentId, { delivered: nextVal });
+    // Persist via RPC to daily_deliveries using date/shift
+    if (SUPABASE_CONFIGURED && supabase && current?.date && current?.shift) {
+      await setDeliveryStatus(assignmentId, current.date, current.shift, !!nextVal, current.liters);
     }
     setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, delivered: !!nextVal } : a)));
   }, [assignments]);

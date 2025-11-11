@@ -18,7 +18,7 @@ export async function getCustomers() {
 
     const { data, error } = await supabase
       .from('customers')
-      .select('id, name, phone, address, plan, plan_type, created_at, updated_at')
+      .select('id, name, phone, address, plan, plan_type, preferred_shift, created_at, updated_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -56,6 +56,7 @@ export async function addCustomer(customerData) {
         address: customerData.address.trim(),
         plan: customerData.plan.trim(),
         plan_type: customerData.planType || 'Daily',
+        preferred_shift: (customerData.preferredShift || 'morning').toLowerCase(),
       })
       .select()
       .single();
@@ -89,6 +90,7 @@ export async function updateCustomer(customerId, updates) {
         address: updates.address?.trim(),
         plan: updates.plan?.trim(),
         plan_type: updates.planType || 'Daily',
+        preferred_shift: (updates.preferredShift || 'morning').toLowerCase(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', customerId)

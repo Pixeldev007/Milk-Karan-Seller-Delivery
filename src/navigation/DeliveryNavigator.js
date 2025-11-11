@@ -1,9 +1,10 @@
 import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { DailySellScreen } from '../delivery/screens/DailySellScreen';
 import { MyDeliveryScreen } from '../delivery/screens/MyDeliveryScreen';
-import { SettingsScreen } from '../delivery/screens/SettingsScreen';
 import { DeliveryProvider } from '../delivery/context/DeliveryContext';
+import { AuthProvider as DeliveryAuthProvider } from '../delivery/context/AuthContext';
+import { useAuth as useSellerAuth } from '../context/AuthContext';
+import { useAuth as useDeliveryAuth } from '../delivery/context/AuthContext';
 // Lazy-loaded modules to avoid bundling optional deps before needed
 function MyPickupScreenLazy(props) {
   const { MyPickupScreen } = require('../delivery/screens/MyPickupScreen');
@@ -28,21 +29,50 @@ function DashboardScreenLazy(props) {
   const { DashboardScreen } = require('../delivery/screens/DashboardScreen');
   return <DashboardScreen {...props} />;
 }
+function ReportScreenLazy(props) {
+  const { ReportScreen } = require('../delivery/screens/ReportScreen');
+  return <ReportScreen {...props} />;
+}
 
 export default function DeliveryNavigator() {
+  // Bridge: if seller AuthContext already has deliveryAgent, seed delivery AuthContext
+  function Bridge({ children }) {
+    const { deliveryAgent } = useSellerAuth();
+    const dAuth = useDeliveryAuth();
+    React.useEffect(() => {
+      if (deliveryAgent && !dAuth.agent) {
+        dAuth.loginAs('delivery_boy', {
+          id: deliveryAgent.id,
+          ownerId: deliveryAgent.owner_id || deliveryAgent.ownerId || '',
+          name: deliveryAgent.name,
+          phone: deliveryAgent.phone,
+          area: deliveryAgent.area || undefined,
+          loginId: deliveryAgent.login_id || deliveryAgent.loginId || undefined,
+          createdAt: deliveryAgent.created_at || deliveryAgent.createdAt || new Date().toISOString(),
+          updatedAt: deliveryAgent.updated_at || deliveryAgent.updatedAt || new Date().toISOString(),
+        });
+      }
+    }, [deliveryAgent, dAuth.agent]);
+    return children;
+  }
+
   return (
-    <DeliveryProvider>
-      <Drawer.Navigator
-        screenOptions={{ headerShown: false }}
-        drawerContent={(props) => <DrawerContentLazy {...props} />}
-      >
-        <Drawer.Screen name="Dashboard" component={DashboardScreenLazy} />
-        <Drawer.Screen name="MyPickup" component={MyPickupScreenLazy} />
-        <Drawer.Screen name="DailySell" component={DailySellScreen} />
-        <Drawer.Screen name="Bill" component={BillScreenLazy} />
-        <Drawer.Screen name="MyDelivery" component={MyDeliveryScreen} />
-        <Drawer.Screen name="Settings" component={SettingsScreen} />
-      </Drawer.Navigator>
-    </DeliveryProvider>
+    <DeliveryAuthProvider>
+      <DeliveryProvider>
+        <Bridge>
+          <Drawer.Navigator
+            initialRouteName="Dashboard"
+            screenOptions={{ headerShown: false }}
+            drawerContent={(props) => <DrawerContentLazy {...props} />}
+          >
+            <Drawer.Screen name="Dashboard" component={DashboardScreenLazy} />
+            <Drawer.Screen name="MyPickup" component={MyPickupScreenLazy} />
+            <Drawer.Screen name="Bill" component={BillScreenLazy} />
+            <Drawer.Screen name="MyDelivery" component={MyDeliveryScreen} />
+            <Drawer.Screen name="Report" component={ReportScreenLazy} />
+          </Drawer.Navigator>
+        </Bridge>
+      </DeliveryProvider>
+    </DeliveryAuthProvider>
   );
 }

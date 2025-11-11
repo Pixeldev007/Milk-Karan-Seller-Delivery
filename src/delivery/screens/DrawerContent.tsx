@@ -4,21 +4,76 @@ import { DrawerContentComponentProps, DrawerContentScrollView } from '@react-nav
 import { Colors } from '../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { useAuth as useSellerAuth } from '../../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 export const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const [language, setLanguage] = React.useState('en');
   const [open, setOpen] = React.useState(false);
-  const { signOut } = useAuth();
+  // Delivery app auth (from seller's schema: delivery_agents/customers)
+  let auth: ReturnType<typeof useAuth> | null = null;
+  try {
+    auth = useAuth();
+  } catch {
+    auth = null;
+  }
+  // Seller app auth (to clear deliveryAgent in Bridge on logout)
+  let sellerAuth: ReturnType<typeof useSellerAuth> | null = null;
+  try {
+    sellerAuth = useSellerAuth();
+  } catch {
+    sellerAuth = null;
+  }
+  const [supabaseName, setSupabaseName] = React.useState<string>('');
+  const [supabasePhone, setSupabasePhone] = React.useState<string>('');
+  const [supabaseSubtitle, setSupabaseSubtitle] = React.useState<string>('');
+
+  // Fallback: if delivery auth not available, read Supabase session user metadata
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        const user = data?.user;
+        if (!mounted || !user) return;
+        const fullName = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || (user.email as string) || 'User';
+        setSupabaseName(fullName);
+        // best-effort phone/address from metadata if provided by backend
+        const phone = (user.user_metadata?.phone as string) || '';
+        const address = (user.user_metadata?.address as string) || '';
+        setSupabasePhone(phone);
+        setSupabaseSubtitle(address);
+      } catch {}
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Prefer delivery AuthContext values first; fallback to Supabase user metadata
+  const displayName = React.useMemo(() => {
+    if (auth?.role === 'delivery_boy' && auth?.agent?.name) return `${auth.agent.name} (Delivery)`;
+    if (auth?.role === 'customer' && auth?.customer?.name) return auth.customer.name;
+    return supabaseName || 'User';
+  }, [auth?.role, auth?.agent?.name, auth?.customer?.name, supabaseName]);
+
+  const phone = auth?.role === 'delivery_boy' ? auth?.agent?.phone : auth?.role === 'customer' ? auth?.customer?.phone : supabasePhone;
+  const subtitle = auth?.role === 'delivery_boy' ? auth?.agent?.area : auth?.role === 'customer' ? auth?.customer?.address : supabaseSubtitle;
+  const initials = (displayName || '')
+    .split(' ')
+    .filter(Boolean)
+    .map((s) => s[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'U';
 
   return (
     <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1, paddingBottom: 24 }}>
       <View style={styles.header}>
-        <View style={styles.avatar}><Text style={styles.avatarText}>PG</Text></View>
+        <View style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
         <View style={{ marginLeft: 12 }}>
-          <Text style={styles.name}>Paresh Gami (Delivery)</Text>
-          <Text style={styles.muted}>9726502930</Text>
-          <Text style={styles.muted}>Samvaad sonnet</Text>
+          <Text style={styles.name}>{displayName}</Text>
+          {!!phone && <Text style={styles.muted}>{phone}</Text>}
+          {!!subtitle && <Text style={styles.muted}>{subtitle}</Text>}
         </View>
       </View>
 
@@ -27,7 +82,18 @@ export const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       <DrawerItem icon="cart" label="Daily Sell" onPress={() => props.navigation.navigate('DailySell' as never)} />
       <DrawerItem icon="bus" label="My Delivery" onPress={() => props.navigation.navigate('MyDelivery' as never)} />
       <DrawerItem icon="star" label="Rate Us" onPress={() => {}} />
-      <DrawerItem icon="log-out" label="Logout" onPress={async () => { try { await signOut(); } catch {} }} />
+      <DrawerItem icon="log-out" label="Logout" onPress={async () => {
+        try {
+          // Clear delivery app state
+          auth?.logout?.();
+          // Clear seller auth deliveryAgent so Bridge does not re-seed
+          await sellerAuth?.signOut?.();
+          // Clear Supabase session if any
+          await supabase.auth.signOut();
+        } catch {}
+        // Close drawer after logout
+        try { props.navigation.closeDrawer(); } catch {}
+      }} />
 
       <View style={{ flex: 1 }} />
 

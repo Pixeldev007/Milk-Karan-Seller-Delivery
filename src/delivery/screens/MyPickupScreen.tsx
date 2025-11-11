@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Switch, Linking, Modal } from 'react-native';
 import { HeaderBar } from '../components/HeaderBar';
 import { DayTabs, Day } from '../components/DayTabs';
 import { Colors } from '../theme/colors';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { useDelivery, Product } from '../context/DeliveryContext';
 import { setDeliveryStatus } from '../services/deliveryApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 type Shift = 'morning' | 'evening';
 
@@ -45,11 +45,16 @@ export const MyPickupScreen: React.FC = () => {
   const nav = useNavigation();
   const {
     assignments,
+    loading,
+    refresh,
     toggleDelivered,
     getCustomerById,
     getDeliveryAgentById,
+    startTrip,
+    recordCall,
+    completeTrip,
   } = useDelivery();
-  const { deliveryAgent } = useAuth();
+  const { agent: deliveryAgent } = useAuth();
 
   if (!deliveryAgent) {
     return (
@@ -67,6 +72,17 @@ export const MyPickupScreen: React.FC = () => {
   const [selectedDayIndex, setSelectedDayIndex] = React.useState(3);
   const [selectedShift, setSelectedShift] = React.useState<Shift>('morning');
   const [notes, setNotes] = React.useState('');
+  const [tripIds, setTripIds] = React.useState<Record<string, string>>({});
+  const [showDeliverModal, setShowDeliverModal] = React.useState(false);
+  const [deliverCtx, setDeliverCtx] = React.useState<{
+    tripId: string;
+    assignmentId: string;
+    product: string;
+    rate: number;
+    liters: number;
+    delivered: boolean;
+    failureReason?: string | null;
+  } | null>(null);
 
   // No assign form; assignments are created by seller. This page only shows and updates delivery status.
 
@@ -76,9 +92,9 @@ export const MyPickupScreen: React.FC = () => {
     if (!selectedDay) return [];
     return assignments
       .filter((assignment) => {
-        // If backend has date/shift, filter normally; if missing, let UI selection include it
-        if (assignment.date && assignment.date !== selectedDay.value) return false;
-        if (assignment.shift && assignment.shift !== selectedShift) return false;
+        // Filter to selected date/shift and logged-in agent per schema
+        if (assignment.date !== selectedDay.value) return false;
+        if (assignment.shift !== selectedShift) return false;
         // Only show assignments for the logged-in delivery agent
         if (deliveryAgent?.id && assignment.deliveryAgentId !== deliveryAgent.id) return false;
         return true;
@@ -123,6 +139,27 @@ export const MyPickupScreen: React.FC = () => {
         <Text style={styles.dateText}>{new Date(selectedDay?.value ?? '').toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 12 }}>
+        <View style={styles.filterRow}>
+          <Text style={styles.filterLabel}>Shift</Text>
+          <View style={{ flexDirection: 'row' }}>
+            {SHIFT_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[styles.segmentBtn, selectedShift === option.value && styles.segmentBtnActive]}
+                onPress={() => setSelectedShift(option.value)}
+              >
+                <Text style={[styles.segmentText, selectedShift === option.value && styles.segmentTextActive]}>{option.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {loading && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Loading assignments...</Text>
+            <Text style={styles.emptySub}>Fetching from server</Text>
+          </View>
+        )}
         <View style={styles.segment}>
           {SHIFT_OPTIONS.map((option) => (
             <TouchableOpacity
@@ -134,8 +171,6 @@ export const MyPickupScreen: React.FC = () => {
             </TouchableOpacity>
           ))}
         </View>
-
-        {/* Showing assignments only for the logged-in delivery agent */}
 
         <View style={styles.summaryCard}>
           <TableRow name="PRODUCT" assigned="ASSIGNED" delivered="DELIVERED" pending="PENDING" head />
@@ -154,8 +189,6 @@ export const MyPickupScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Assign form removed per requirement */}
-
         <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Assignments</Text>
         {shiftAssignments.length === 0 ? (
           <View style={styles.emptyState}>
@@ -166,17 +199,64 @@ export const MyPickupScreen: React.FC = () => {
           shiftAssignments.map((assignment) => {
             const customer = getCustomerById(assignment.customerId);
             const agent = getDeliveryAgentById(assignment.deliveryAgentId);
+            const rate = customer?.rate ?? 0;
+            const amount = rate * assignment.liters;
             return (
               <View key={assignment.id} style={styles.assignmentCard}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.assignmentName}>{customer?.name ?? 'Unknown Customer'}</Text>
-                  <Text style={styles.assignmentMeta}>
-                    {customer?.product} • {assignment.liters.toFixed(1)} L
-                  </Text>
-                  <Text style={styles.assignmentMeta}>
-                    Agent: {agent?.name ?? 'Unassigned'}
-                  </Text>
-                  <Text style={styles.assignmentMeta}>Shift: {(assignment.shift ?? selectedShift) === 'morning' ? 'Morning' : 'Evening'}</Text>
+                  {!!customer?.phone && <Text style={styles.assignmentMeta}>{customer.phone}</Text>}
+                  {!!customer?.address && <Text style={styles.assignmentMeta}>{customer.address}</Text>}
+                  <Text style={styles.assignmentMeta}>{customer?.product} • {assignment.liters.toFixed(1)} L • Rate {rate.toFixed(0)}</Text>
+                  <Text style={styles.assignmentMeta}>Amount: ₹{amount.toFixed(0)}</Text>
+                  <Text style={styles.assignmentMeta}>Shift: {assignment.shift === 'morning' ? 'Morning' : 'Evening'} • Date: {selectedDay.value}</Text>
+                  <Text style={styles.assignmentMeta}>Agent: {agent?.name ?? 'Unassigned'}</Text>
+                </View>
+                <View style={{ gap: 8, marginTop: 8 }}>
+                  {!tripIds[assignment.id] ? (
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: '#16a34a' }]}
+                      onPress={async () => {
+                        const t = await startTrip(assignment.id, selectedDay.value, selectedShift);
+                        if (t) setTripIds((prev) => ({ ...prev, [assignment.id]: t }));
+                      }}
+                    >
+                      <Text style={styles.actionBtnText}>Start Drive</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: '#2563eb', flex: 1 }]}
+                        disabled={!customer?.phone}
+                        onPress={async () => {
+                          if (customer?.phone) {
+                            try { await Linking.openURL(`tel:${customer.phone}`); } catch {}
+                            await recordCall(tripIds[assignment.id]);
+                          }
+                        }}
+                      >
+                        <Text style={styles.actionBtnText}>Call</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: '#ea580c', flex: 1 }]}
+                        onPress={() => {
+                          const r = customer?.rate ?? 0;
+                          setDeliverCtx({
+                            tripId: tripIds[assignment.id],
+                            assignmentId: assignment.id,
+                            product: customer?.product || 'Cow Milk',
+                            rate: r,
+                            liters: assignment.liters,
+                            delivered: true,
+                            failureReason: null,
+                          });
+                          setShowDeliverModal(true);
+                        }}
+                      >
+                        <Text style={styles.actionBtnText}>Delivered</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
                 <View style={styles.switchWrap}>
                   <Text style={styles.switchLabel}>Delivered</Text>
@@ -192,6 +272,8 @@ export const MyPickupScreen: React.FC = () => {
                           value,
                           assignment.liters,
                         );
+                        // refresh assignments so totals reflect live state
+                        await refresh();
                       } catch (e) {
                         // ignore; UI still updates via local state
                       }
@@ -213,6 +295,79 @@ export const MyPickupScreen: React.FC = () => {
           placeholder="Notes for the shift"
           placeholderTextColor={Colors.muted}
         />
+        <Modal visible={showDeliverModal} transparent animationType="fade" onRequestClose={() => setShowDeliverModal(false)}>
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Complete Delivery</Text>
+              <Text style={styles.modalLabel}>Product</Text>
+              <TextInput
+                value={deliverCtx?.product ?? ''}
+                onChangeText={(t) => setDeliverCtx((p) => (p ? { ...p, product: t } : p))}
+                style={styles.input}
+              />
+              <Text style={styles.modalLabel}>Rate</Text>
+              <TextInput
+                keyboardType="numeric"
+                value={(deliverCtx?.rate ?? 0).toString()}
+                onChangeText={(t) => setDeliverCtx((p) => (p ? { ...p, rate: Number(t) || 0 } : p))}
+                style={styles.input}
+              />
+              <Text style={styles.modalLabel}>Liters</Text>
+              <TextInput
+                keyboardType="numeric"
+                value={(deliverCtx?.liters ?? 0).toString()}
+                onChangeText={(t) => setDeliverCtx((p) => (p ? { ...p, liters: Number(t) || 0 } : p))}
+                style={styles.input}
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+                <Text style={styles.modalLabel}>Delivered?</Text>
+                <Switch
+                  style={{ marginLeft: 12 }}
+                  value={!!deliverCtx?.delivered}
+                  onValueChange={(v) => setDeliverCtx((p) => (p ? { ...p, delivered: v } : p))}
+                />
+              </View>
+              {!deliverCtx?.delivered && (
+                <>
+                  <Text style={styles.modalLabel}>Failure Reason</Text>
+                  <TextInput
+                    value={deliverCtx?.failureReason ?? ''}
+                    onChangeText={(t) => setDeliverCtx((p) => (p ? { ...p, failureReason: t } : p))}
+                    style={styles.input}
+                    placeholder="e.g. Customer not available"
+                  />
+                </>
+              )}
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+                <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#6b7280', flex: 1 }]} onPress={() => setShowDeliverModal(false)}>
+                  <Text style={styles.actionBtnText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: '#16a34a', flex: 1 }]}
+                  onPress={async () => {
+                    if (!deliverCtx) return;
+                    await completeTrip(deliverCtx.tripId, {
+                      delivered: deliverCtx.delivered,
+                      liters: deliverCtx.liters,
+                      rate: deliverCtx.rate,
+                      product: deliverCtx.product,
+                      failureReason: deliverCtx.failureReason ?? null,
+                    });
+                    setShowDeliverModal(false);
+                    setTripIds((prev) => {
+                      const copy = { ...prev };
+                      delete copy[deliverCtx.assignmentId];
+                      return copy;
+                    });
+                    await refresh();
+                  }}
+                >
+                  <Text style={styles.actionBtnText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </View>
   );
@@ -336,4 +491,31 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: 16,
   },
+  actionBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  actionBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 16,
+  },
+  modalTitle: { color: Colors.text, fontWeight: '700', fontSize: 16, marginBottom: 8 },
+  modalLabel: { color: Colors.muted, fontWeight: '600', marginTop: 8, marginBottom: 4 },
 });

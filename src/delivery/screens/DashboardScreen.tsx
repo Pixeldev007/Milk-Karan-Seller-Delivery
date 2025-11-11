@@ -44,10 +44,9 @@ export const DashboardScreen: React.FC = () => {
       </View>
       <ScrollView contentContainerStyle={{ padding: 12 }}>
         <Card icon="car" title="My Pickup" subtitle="Pickup, delivery, analysis" onPress={() => nav.navigate('MyPickup' as never)} />
-        <Card icon="cart" title="My Sell" subtitle="View your daily sell" onPress={() => nav.navigate('DailySell' as never)} />
-        <Card icon="pricetags" title="Daily Sell" subtitle="Make daily sell" onPress={() => nav.navigate('DailySell' as never)} />
         <Card icon="receipt" title="Create Bill" subtitle="Make customers bill, credit" onPress={() => nav.navigate('Bill' as never)} />
         <Card icon="bus" title="My Delivery" subtitle="View delivery details" onPress={() => nav.navigate('MyDelivery' as never)} />
+        <Card icon="document-text" title="Report" subtitle="Enquiry / Message" onPress={() => nav.navigate('Report' as never)} />
       </ScrollView>
     </View>
   );

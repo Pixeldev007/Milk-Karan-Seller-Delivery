@@ -4,7 +4,7 @@ import { HeaderBar } from '../../components/HeaderBar';
 import { Colors } from '../../theme/colors';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth, AuthRole } from '../../context/AuthContext';
-import { findAgentByNamePhone, findCustomerByNamePhone } from '../../services/deliveryApi';
+import { loginDeliveryAgent, findAgentByNamePhone, findAgentByLoginIdPhone, findCustomerByNamePhone } from '../../services/deliveryApi';
 
 export const NamePhoneLoginScreen: React.FC = () => {
   const nav = useNavigation();
@@ -36,9 +36,12 @@ export const NamePhoneLoginScreen: React.FC = () => {
           (nav as any).reset({ index: 0, routes: [{ name: 'Main' }] });
         }
       } else {
-        const ag = await findAgentByNamePhone(n, p);
+        // Prefer RPC (works under RLS for anon), fallback to client queries
+        let ag = await loginDeliveryAgent(n, p);
+        if (!ag) ag = await findAgentByLoginIdPhone(n, p);
+        if (!ag) ag = await findAgentByNamePhone(n, p);
         if (!ag) {
-          setError('No delivery boy found with given details');
+          setError('No delivery boy found. Use Login ID + Phone or Name + Phone');
         } else {
           loginAs('delivery_boy', ag);
           (nav as any).reset({ index: 0, routes: [{ name: 'Main' }] });
@@ -57,8 +60,8 @@ export const NamePhoneLoginScreen: React.FC = () => {
       <View style={styles.container}>
         <View style={styles.row}>
           <View style={styles.col}>
-            <Text style={styles.label}>Name</Text>
-            <TextInput value={name} onChangeText={setName} style={styles.input} placeholder="Enter name" placeholderTextColor="#9ca3af" />
+            <Text style={styles.label}>{role === 'customer' ? 'Name' : 'Login ID or Name'}</Text>
+            <TextInput value={name} onChangeText={setName} style={styles.input} placeholder={role === 'customer' ? 'Enter name' : 'Enter login id or name'} placeholderTextColor="#9ca3af" />
           </View>
           <View style={styles.col}>
             <Text style={styles.label}>Phone</Text>

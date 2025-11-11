@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Customer, DeliveryAgent } from '../data/mock';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type AuthRole = 'customer' | 'delivery_boy';
 
@@ -25,20 +26,41 @@ const AuthContext = React.createContext<AuthContextValue | undefined>(undefined)
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [state, setState] = React.useState<AuthState>({ role: null, scanned: false, customer: null, agent: null });
 
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem('delivery_auth_state');
+        if (!mounted || !raw) return;
+        const parsed: AuthState = JSON.parse(raw);
+        setState(parsed);
+      } catch {}
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const setScanned = React.useCallback((val: boolean) => {
     setState((s) => ({ ...s, scanned: val }));
   }, []);
 
   const loginAs = React.useCallback((role: AuthRole, entity: Customer | DeliveryAgent) => {
     if (role === 'customer') {
-      setState({ role, scanned: true, customer: entity as Customer, agent: null });
+      const next = { role, scanned: true, customer: entity as Customer, agent: null } as AuthState;
+      setState(next);
+      AsyncStorage.setItem('delivery_auth_state', JSON.stringify(next)).catch(() => {});
     } else {
-      setState({ role, scanned: true, customer: null, agent: entity as DeliveryAgent });
+      const next = { role, scanned: true, customer: null, agent: entity as DeliveryAgent } as AuthState;
+      setState(next);
+      AsyncStorage.setItem('delivery_auth_state', JSON.stringify(next)).catch(() => {});
     }
   }, []);
 
   const logout = React.useCallback(() => {
-    setState({ role: null, scanned: false, customer: null, agent: null });
+    const next = { role: null, scanned: false, customer: null, agent: null } as AuthState;
+    setState(next);
+    AsyncStorage.removeItem('delivery_auth_state').catch(() => {});
   }, []);
 
   const value = React.useMemo<AuthContextValue>(() => ({

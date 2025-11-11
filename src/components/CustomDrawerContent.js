@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,13 +9,50 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export default function CustomDrawerContent({ navigation }) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, deliveryAgent } = useAuth();
+  const [profileName, setProfileName] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        if (!user?.id) return;
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name, phone')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (error || !mounted) return;
+        if (data) {
+          setProfileName(data.full_name || '');
+          setProfilePhone(data.phone || '');
+        }
+      } catch {}
+    })();
+    return () => { mounted = false; };
+  }, [user?.id]);
 
   const profile = useMemo(() => {
-    const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'User';
-    const email = user?.email ?? '';
+    // Prefer delivery agent details when logged in as delivery
+    if (deliveryAgent?.name) {
+      const fullName = `${deliveryAgent.name} (Delivery)`;
+      const email = deliveryAgent.phone || '';
+      const initials = fullName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join('') || 'MW';
+      return { fullName, email, initials };
+    }
+
+    // Then prefer profiles table values if present
+    const fullName = profileName || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'User';
+    const email = profilePhone || user?.email || '';
     const initials = fullName
       .split(' ')
       .filter(Boolean)
@@ -28,7 +65,7 @@ export default function CustomDrawerContent({ navigation }) {
       email,
       initials,
     };
-  }, [user]);
+  }, [user, deliveryAgent, profileName, profilePhone]);
 
   const menuItems = [
     { id: 1, title: 'Dashboard', icon: 'home-outline', route: 'Dashboard' },

@@ -4,7 +4,8 @@ import { HeaderBar } from '../components/HeaderBar';
 import { Colors } from '../theme/colors';
 import Checkbox from 'expo-checkbox';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
-import { CUSTOMERS, DAILY_ENTRIES, formatINR, litersToAmount } from '../data/mock';
+import { formatINR, litersToAmount } from '../data/mock';
+import { useDelivery } from '../context/DeliveryContext';
 
 const QtyStepper: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => (
   <View style={styles.stepper}>
@@ -16,6 +17,7 @@ const QtyStepper: React.FC<{ value: string; onChange: (v: string) => void }> = (
 
 export const BulkSellScreen: React.FC = () => {
   const nav = useNavigation();
+  const { customers } = useDelivery();
   const [autoNext, setAutoNext] = React.useState(true);
   const [morning, setMorning] = React.useState(true);
   const [selectAll, setSelectAll] = React.useState(false);
@@ -26,22 +28,21 @@ export const BulkSellScreen: React.FC = () => {
   React.useEffect(() => {
     const next: Record<string, string> = {};
     const sel: Record<string, boolean> = {};
-    for (const c of CUSTOMERS) {
-      const entry = DAILY_ENTRIES.find(e => e.customerId === c.id);
-      const liters = entry ? (morning ? entry.morningLiters : entry.eveningLiters) : 0;
-      next[c.id] = liters ? String(liters) : '0';
+    for (const c of customers) {
+      // No default daily entries from mock; initialize to 0 liters
+      next[c.id] = '0';
       sel[c.id] = selectAll; // keep select-all state consistent
     }
     setQtyMap(next);
     setSelectedIds(sel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [morning]);
+  }, [morning, customers]);
 
   const toggleSelectAll = (val: boolean) => {
     setSelectAll(val);
     setSelectedIds((prev) => {
       const out: Record<string, boolean> = {};
-      for (const c of CUSTOMERS) out[c.id] = val;
+      for (const c of customers) out[c.id] = val;
       return out;
     });
   };
@@ -55,14 +56,14 @@ export const BulkSellScreen: React.FC = () => {
   const calcTotals = React.useMemo(() => {
     let liters = 0;
     let amount = 0;
-    for (const c of CUSTOMERS) {
+    for (const c of customers) {
       if (!selectedIds[c.id]) continue;
       const l = parseFloat(qtyMap[c.id] || '0') || 0;
       liters += l;
       amount += litersToAmount(c.product, l);
     }
     return { liters, amount };
-  }, [qtyMap, selectedIds]);
+  }, [qtyMap, selectedIds, customers]);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
@@ -86,7 +87,7 @@ export const BulkSellScreen: React.FC = () => {
             <Checkbox value={selectAll} onValueChange={toggleSelectAll} color={selectAll ? Colors.primary : undefined} />
             <Text style={{ marginLeft: 8, fontWeight: '600', color: Colors.text }}>Select all customer</Text>
           </View>
-          {CUSTOMERS.map((c, idx) => {
+          {customers.map((c, idx) => {
             const liters = qtyMap[c.id] ?? '0';
             const amount = litersToAmount(c.product, parseFloat(liters || '0') || 0);
             const checked = !!selectedIds[c.id];

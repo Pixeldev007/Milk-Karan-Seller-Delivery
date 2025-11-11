@@ -6,7 +6,11 @@ import {
   fetchCustomers,
   fetchDeliveryAgents,
   insertAssignment,
+  updateAssignment,
   setDeliveryStatus,
+  startDeliveryTrip,
+  recordDeliveryCall,
+  completeDelivery,
 } from '../services/deliveryApi';
 
 type Shift = Assignment['shift'];
@@ -37,6 +41,12 @@ type DeliveryContextValue = {
   updateAssignmentLiters: (assignmentId: string, liters: number) => void;
   getCustomerById: (id: string) => Customer | undefined;
   getDeliveryAgentById: (id: string) => DeliveryAgent | undefined;
+  startTrip: (assignmentId: string, date: string, shift: Shift) => Promise<string | null>;
+  recordCall: (tripId: string) => Promise<void>;
+  completeTrip: (
+    tripId: string,
+    params: { delivered: boolean; liters: number; rate: number; product: string; failureReason?: string | null },
+  ) => Promise<void>;
 };
 
 const DeliveryContext = React.createContext<DeliveryContextValue | undefined>(undefined);
@@ -138,6 +148,25 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
     setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, liters } : a)));
   }, []);
 
+  const startTrip = React.useCallback(async (assignmentId: string, date: string, shift: Shift) => {
+    const tripId = await startDeliveryTrip(assignmentId, date, shift);
+    await refresh();
+    return tripId;
+  }, [refresh]);
+
+  const recordCall = React.useCallback(async (tripId: string) => {
+    await recordDeliveryCall(tripId);
+    await refresh();
+  }, [refresh]);
+
+  const completeTrip = React.useCallback(async (
+    tripId: string,
+    params: { delivered: boolean; liters: number; rate: number; product: string; failureReason?: string | null },
+  ) => {
+    await completeDelivery(tripId, params);
+    await refresh();
+  }, [refresh]);
+
   const getCustomerById = React.useCallback(
     (id: string) => customers.find((customer) => customer.id === id),
     [customers],
@@ -165,8 +194,11 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
       updateAssignmentLiters,
       getCustomerById,
       getDeliveryAgentById,
+      startTrip,
+      recordCall,
+      completeTrip,
     }),
-    [ownerId, userId, customers, deliveryAgents, assignments, loading, refresh, connected, addCustomer, assignWork, toggleDelivered, updateAssignmentLiters, getCustomerById, getDeliveryAgentById],
+    [ownerId, userId, customers, deliveryAgents, assignments, loading, refresh, connected, addCustomer, assignWork, toggleDelivered, updateAssignmentLiters, getCustomerById, getDeliveryAgentById, startTrip, recordCall, completeTrip],
   );
 
   return <DeliveryContext.Provider value={value}>{children}</DeliveryContext.Provider>;

@@ -4,9 +4,10 @@ import { HeaderBar } from '../components/HeaderBar';
 import { Colors } from '../theme/colors';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
-import { CUSTOMERS, DAILY_ENTRIES, formatINR } from '../data/mock';
+import { formatINR } from '../data/mock';
 import { SearchInput } from '../components/SearchInput';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useDelivery } from '../context/DeliveryContext';
 
 function daysInMonth(year: number, monthIndex: number) { // monthIndex 0..11
   return new Date(year, monthIndex + 1, 0).getDate();
@@ -14,6 +15,7 @@ function daysInMonth(year: number, monthIndex: number) { // monthIndex 0..11
 
 export const BillScreen: React.FC = () => {
   const nav = useNavigation();
+  const { customers, assignments } = useDelivery();
   const now = new Date();
   const [month, setMonth] = React.useState<number>(now.getMonth());
   const [year, setYear] = React.useState<number>(now.getFullYear());
@@ -22,17 +24,29 @@ export const BillScreen: React.FC = () => {
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   const list = React.useMemo((): { id: string; name: string; amount: number }[] => {
-    const days = daysInMonth(year, month);
     const term = search.trim().toLowerCase();
-    return CUSTOMERS
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 0);
+    const startIso = start.toISOString().slice(0, 10);
+    const endIso = end.toISOString().slice(0, 10);
+
+    // Aggregate delivered liters per customer for selected month
+    const litersByCustomer = new Map<string, number>();
+    assignments.forEach((a) => {
+      if (!a.delivered) return;
+      if (a.date < startIso || a.date > endIso) return;
+      litersByCustomer.set(a.customerId, (litersByCustomer.get(a.customerId) || 0) + (a.liters || 0));
+    });
+
+    return customers
       .filter((c) => c.name.toLowerCase().includes(term))
       .map((c) => {
-        const e = DAILY_ENTRIES.find((d) => d.customerId === c.id);
-        const dailyLiters = (e?.morningLiters || 0) + (e?.eveningLiters || 0);
-        const amount = dailyLiters * c.rate * days; // simple monthly estimate
+        const liters = litersByCustomer.get(c.id) || 0;
+        const amount = liters * c.rate;
         return { id: c.id, name: c.name, amount };
-      });
-  }, [month, year, search]);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [month, year, search, customers, assignments]);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>

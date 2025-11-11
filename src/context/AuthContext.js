@@ -76,17 +76,30 @@ export function AuthProvider({ children }) {
           throw new Error(error.message);
         }
       },
-      // Delivery login by name + phone (no Supabase Auth account required)
+      // Delivery login by login_id OR name + phone. Tries RPC first to bypass RLS for anon.
       deliverySignInByNamePhone: async ({ name, phone }) => {
         const normalizedName = (name || '').trim();
         const normalizedPhone = (phone || '').replace(/\s+/g, '');
         if (!normalizedName || !normalizedPhone) {
           throw new Error('Name and phone are required');
         }
+        // Try SECURITY DEFINER RPC (accepts login_id OR name in first arg)
+        const { data: rpcData, error: rpcError } = await supabase.rpc('login_delivery_agent', {
+          p_identifier: normalizedName,
+          p_phone: normalizedPhone,
+        });
+        if (!rpcError && rpcData) {
+          const row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+          if (row) {
+            setDeliveryAgent(row);
+            return;
+          }
+        }
+        // Fallback: direct select (will work only if policies allow)
         const { data, error } = await supabase
           .from('delivery_agents')
           .select('*')
-          .eq('name', normalizedName)
+          .or(`login_id.eq.${normalizedName},name.eq.${normalizedName}`)
           .eq('phone', normalizedPhone)
           .limit(1)
           .maybeSingle();

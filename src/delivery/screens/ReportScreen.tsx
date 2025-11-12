@@ -3,8 +3,10 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingVi
 import { HeaderBar } from '../components/HeaderBar';
 import { Colors } from '../theme/colors';
 import { Linking } from 'react-native';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 
 export const ReportScreen: React.FC = () => {
+  const nav = useNavigation();
   const [name, setName] = React.useState('');
   const [phone, setPhone] = React.useState('');
   const [email, setEmail] = React.useState('');
@@ -68,7 +70,7 @@ export const ReportScreen: React.FC = () => {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: Colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <HeaderBar title="Report" />
+      <HeaderBar title="Report" onPressMenu={() => nav.dispatch(DrawerActions.openDrawer())} />
       <View style={styles.container}>
         <Text style={styles.sectionTitle}>Send Enquiry / Message</Text>
         <View style={styles.row}>

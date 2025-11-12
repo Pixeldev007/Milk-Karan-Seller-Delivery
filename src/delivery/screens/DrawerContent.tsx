@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Linking, Alert } from 'react-native';
 import { DrawerContentComponentProps, DrawerContentScrollView } from '@react-navigation/drawer';
 import { Colors } from '../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -79,9 +79,23 @@ export const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
       <DrawerItem icon="home" label="Dashboard" onPress={() => props.navigation.navigate('Dashboard' as never)} />
       <DrawerItem icon="car" label="My Pickup" onPress={() => props.navigation.navigate('MyPickup' as never)} />
-      <DrawerItem icon="cart" label="Daily Sell" onPress={() => props.navigation.navigate('DailySell' as never)} />
+      <DrawerItem icon="receipt" label="Create Bill" onPress={() => props.navigation.navigate('Bill' as never)} />
       <DrawerItem icon="bus" label="My Delivery" onPress={() => props.navigation.navigate('MyDelivery' as never)} />
-      <DrawerItem icon="star" label="Rate Us" onPress={() => {}} />
+      <DrawerItem icon="document-text" label="Report" onPress={() => props.navigation.navigate('Report' as never)} />
+      <DrawerItem icon="settings" label="Settings" onPress={() => props.navigation.navigate('Settings' as never)} />
+      <DrawerItem icon="star" label="Rate Us" onPress={async () => {
+        try {
+          const url = 'https://play.google.com/store/apps/details?id=com.milkwala';
+          const supported = await Linking.canOpenURL(url);
+          if (!supported) {
+            Alert.alert('Unavailable', 'Unable to open the store link on this device');
+            return;
+          }
+          await Linking.openURL(url);
+        } catch (e: any) {
+          Alert.alert('Error', e?.message || 'Failed to open store');
+        }
+      }} />
       <DrawerItem icon="log-out" label="Logout" onPress={async () => {
         try {
           // Clear delivery app state

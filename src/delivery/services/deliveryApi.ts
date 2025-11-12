@@ -139,15 +139,41 @@ export async function fetchAssignments(params?: { from?: string; to?: string; ag
     if (params?.agentId) query = query.eq('delivery_agent_id', params.agentId);
     const { data, error } = await query.order('date', { ascending: true }).order('shift', { ascending: true });
     if (error) throw error;
-    if (!data || data.length === 0) {
+    // Build a local YYYY-MM-DD for today to align with DB date type
+    const todayStr = (() => {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    })();
+
+    // Prefer only today's morning shift to avoid duplicate morning/evening rows in simplified UI
+    const filtered = (data || []).filter((r: any) => r.date === todayStr && (r.shift === 'morning' || r.shift == null));
+
+    // Deduplicate by customer_id in case of any residual duplicates from joins
+    const uniqueByCustomer = new Map<string, any>();
+    for (const r of filtered) {
+      if (!uniqueByCustomer.has(r.customer_id)) uniqueByCustomer.set(r.customer_id, r);
+    }
+
+    const filteredData = Array.from(uniqueByCustomer.values());
+
+    if (!filteredData || filteredData.length === 0) {
       // Fallback to RPC that derives assignments for the agent within range
       if (params?.agentId) {
         const { data: rpc } = await supabase.rpc('get_agent_assignments', {
           p_agent_id: params.agentId,
-          p_from: null,
-          p_to: null,
+          p_from: todayStr,
+          p_to: todayStr,
         });
-        return (rpc || []).map((r: any) => ({
+        // Filter to morning and dedupe by customer
+        const rpcMorning = (rpc || []).filter((r: any) => (r.shift ?? 'morning') === 'morning');
+        const seen = new Map<string, any>();
+        for (const r of rpcMorning) {
+          if (!seen.has(r.customer_id)) seen.set(r.customer_id, r);
+        }
+        return Array.from(seen.values()).map((r: any) => ({
           id: r.id,
           ownerId: r.owner_id,
           customerId: r.customer_id,
@@ -162,7 +188,7 @@ export async function fetchAssignments(params?: { from?: string; to?: string; ag
       }
       return [];
     }
-    return (data || []).map((r: any) => ({
+    return (filteredData || []).map((r: any) => ({
       id: r.id,
       ownerId: r.owner_id,
       customerId: r.customer_id,
@@ -183,7 +209,13 @@ export async function fetchAssignments(params?: { from?: string; to?: string; ag
           p_from: null,
           p_to: null,
         });
-        return (rpc || []).map((r: any) => ({
+        // When falling back, still prefer morning and dedupe by customer
+        const rpcMorning = (rpc || []).filter((r: any) => (r.shift ?? 'morning') === 'morning');
+        const seen = new Map<string, any>();
+        for (const r of rpcMorning) {
+          if (!seen.has(r.customer_id)) seen.set(r.customer_id, r);
+        }
+        return Array.from(seen.values()).map((r: any) => ({
           id: r.id,
           ownerId: r.owner_id,
           customerId: r.customer_id,

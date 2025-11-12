@@ -111,10 +111,32 @@ export const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
       <View style={{ flex: 1 }} />
 
-      <TouchableOpacity style={styles.langBtn} onPress={() => setOpen(true)}>
-        <Ionicons name="language" size={18} color={Colors.text} />
-        <Text style={{ marginLeft: 8, color: Colors.text }}>Language: {language === 'en' ? 'English' : language === 'hi' ? 'हिंदी' : 'ગુજરાતી'}</Text>
-      </TouchableOpacity>
+      <Text style={styles.footerNote}>Free account limited to 30 customers</Text>
+
+      <View style={styles.footerRow}>
+        <View style={styles.footerLeft}>
+          <Ionicons name="language" size={18} color={Colors.text} />
+        </View>
+        <TouchableOpacity style={styles.langPill} onPress={() => setOpen(true)}>
+          <Text style={styles.langPillText}>{language === 'en' ? 'English' : language === 'hi' ? 'हिंदी' : 'ગુજરાતી'}</Text>
+          <Ionicons name="chevron-down" size={18} color={Colors.text} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.socialRow}>
+        <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL('https://instagram.com/')}> 
+          <Ionicons name="logo-instagram" size={18} color="#ffffff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL('https://youtube.com/')}> 
+          <Ionicons name="logo-youtube" size={18} color="#ffffff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.socialBtn} onPress={() => {}}>
+          <Ionicons name="moon" size={18} color="#ffffff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.socialBtn} onPress={() => Linking.openURL('https://wa.me/')}> 
+          <Ionicons name="logo-whatsapp" size={18} color="#ffffff" />
+        </TouchableOpacity>
+      </View>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <View style={styles.modalBg}>
@@ -136,8 +158,11 @@ export const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
 const DrawerItem: React.FC<{ icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void }> = ({ icon, label, onPress }) => (
   <TouchableOpacity style={styles.item} onPress={onPress}>
-    <Ionicons name={icon} size={20} color={Colors.text} />
-    <Text style={styles.itemText}>{label}</Text>
+    <View style={styles.itemLeft}>
+      <Ionicons name={icon} size={20} color={Colors.primary} />
+      <Text style={styles.itemText}>{label}</Text>
+    </View>
+    <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
   </TouchableOpacity>
 );
 
@@ -147,9 +172,16 @@ const styles = StyleSheet.create({
   avatarText: { color: Colors.primaryText, fontWeight: '800' },
   name: { color: '#fff', fontWeight: '700' },
   muted: { color: '#e6ffe6' },
-  item: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderColor: Colors.border, backgroundColor: '#fff' },
-  itemText: { marginLeft: 12, color: Colors.text },
-  langBtn: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderTopWidth: 1, borderColor: Colors.border },
+  item: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderColor: Colors.border, backgroundColor: '#fff' },
+  itemLeft: { flexDirection: 'row', alignItems: 'center' },
+  itemText: { marginLeft: 12, color: Colors.text, fontWeight: '500' },
+  footerNote: { textAlign: 'center', color: Colors.text, opacity: 0.6, fontSize: 12, marginTop: 12, marginBottom: 8 },
+  footerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: '#fff', borderTopWidth: 1, borderColor: Colors.border },
+  footerLeft: { flexDirection: 'row', alignItems: 'center' },
+  langPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eef7ee', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10 },
+  langPillText: { color: Colors.text, marginRight: 6 },
+  socialRow: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 16, paddingTop: 12 },
+  socialBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center', marginHorizontal: 6 },
   modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
   modalCard: { width: '85%', backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden' },
   modalClose: { backgroundColor: Colors.primary, alignItems: 'center', padding: 12 },

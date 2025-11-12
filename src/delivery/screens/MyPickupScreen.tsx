@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Switch, Linking, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Switch, Linking, Modal, RefreshControl } from 'react-native';
 import { HeaderBar } from '../components/HeaderBar';
 import { DayTabs, Day } from '../components/DayTabs';
 import { Colors } from '../theme/colors';
@@ -114,13 +114,19 @@ export const MyPickupScreen: React.FC = () => {
       'Buffalo Milk': { assigned: 0, delivered: 0 },
       'Cow Milk': { assigned: 0, delivered: 0 },
     };
+    const planLiters = (plan?: string) => {
+      if (!plan) return 0;
+      const m = plan.match(/([0-9]+(?:\.[0-9]+)?)\s*[lL]/);
+      return m ? Number(m[1]) : 0;
+    };
     shiftAssignments.forEach((assignment) => {
       const customer = getCustomerById(assignment.customerId);
       if (!customer) return;
       const productBucket = base[customer.product];
-      productBucket.assigned += assignment.liters;
+      const perDay = assignment.liters > 0 ? assignment.liters : planLiters(customer.plan);
+      productBucket.assigned += perDay;
       if (assignment.delivered) {
-        productBucket.delivered += assignment.liters;
+        productBucket.delivered += assignment.liters > 0 ? assignment.liters : perDay;
       }
     });
     return base;
@@ -138,7 +144,10 @@ export const MyPickupScreen: React.FC = () => {
         <DayTabs days={days} selectedIndex={selectedDayIndex} onChange={setSelectedDayIndex} />
         <Text style={styles.dateText}>{new Date(selectedDay?.value ?? '').toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</Text>
       </View>
-      <ScrollView contentContainerStyle={{ padding: 12 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 12 }}
+        refreshControl={<RefreshControl refreshing={!!loading} onRefresh={refresh} />}
+      >
         <View style={styles.filterRow}>
           <Text style={styles.filterLabel}>Shift</Text>
           <View style={{ flexDirection: 'row' }}>
@@ -200,14 +209,19 @@ export const MyPickupScreen: React.FC = () => {
             const customer = getCustomerById(assignment.customerId);
             const agent = getDeliveryAgentById(assignment.deliveryAgentId);
             const rate = customer?.rate ?? 0;
-            const amount = rate * assignment.liters;
+            const planLiters = (() => {
+              const m = (customer?.plan || '').match(/([0-9]+(?:\.[0-9]+)?)\s*[lL]/);
+              return m ? Number(m[1]) : 0;
+            })();
+            const displayLiters = assignment.liters > 0 ? assignment.liters : planLiters;
+            const amount = rate * displayLiters;
             return (
               <View key={assignment.id} style={styles.assignmentCard}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.assignmentName}>{customer?.name ?? 'Unknown Customer'}</Text>
                   {!!customer?.phone && <Text style={styles.assignmentMeta}>{customer.phone}</Text>}
                   {!!customer?.address && <Text style={styles.assignmentMeta}>{customer.address}</Text>}
-                  <Text style={styles.assignmentMeta}>{customer?.product} • {assignment.liters.toFixed(1)} L • Rate {rate.toFixed(0)}</Text>
+                  <Text style={styles.assignmentMeta}>{customer?.product} • {displayLiters.toFixed(1)} L • Rate {rate.toFixed(0)}</Text>
                   <Text style={styles.assignmentMeta}>Amount: ₹{amount.toFixed(0)}</Text>
                   <Text style={styles.assignmentMeta}>Shift: {assignment.shift === 'morning' ? 'Morning' : 'Evening'} • Date: {selectedDay.value}</Text>
                   <Text style={styles.assignmentMeta}>Agent: {agent?.name ?? 'Unassigned'}</Text>
@@ -246,7 +260,7 @@ export const MyPickupScreen: React.FC = () => {
                             assignmentId: assignment.id,
                             product: customer?.product || 'Cow Milk',
                             rate: r,
-                            liters: assignment.liters,
+                            liters: displayLiters,
                             delivered: true,
                             failureReason: null,
                           });
@@ -265,12 +279,19 @@ export const MyPickupScreen: React.FC = () => {
                     onValueChange={async (value) => {
                       // Persist via RPC using currently selected day/shift (creates row if needed)
                       try {
+                        const planLiters = (() => {
+                          const m = (customer?.plan || '').match(/([0-9]+(?:\.[0-9]+)?)\s*[lL]/);
+                          return m ? Number(m[1]) : 0;
+                        })();
+                        const litersToSend = value
+                          ? (assignment.liters > 0 ? assignment.liters : planLiters)
+                          : assignment.liters;
                         await setDeliveryStatus(
                           assignment.id,
                           selectedDay.value,
                           selectedShift,
                           value,
-                          assignment.liters,
+                          litersToSend,
                         );
                         // refresh assignments so totals reflect live state
                         await refresh();

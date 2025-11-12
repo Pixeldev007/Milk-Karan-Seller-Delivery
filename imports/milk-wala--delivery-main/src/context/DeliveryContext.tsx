@@ -1,13 +1,8 @@
 import React from 'react';
 import { Assignment, Customer, DeliveryAgent, Product } from '../data/mock';
 import { supabase, SUPABASE_CONFIGURED } from '../lib/supabaseClient';
-import {
-  fetchAssignments,
-  fetchCustomers,
-  fetchDeliveryAgents,
-  insertAssignment,
-  updateAssignment,
-} from '../services/deliveryApi';
+import { fetchAssignments, fetchCustomers, fetchDeliveryAgents } from '../services/deliveryApi';
+import { useAuth } from '../context/AuthContext';
 
 type Shift = Assignment['shift'];
 
@@ -45,6 +40,7 @@ const generateId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const { agent } = useAuth();
   const [ownerId, setOwnerId] = React.useState<string>('');
   const [userId, setUserId] = React.useState<string>('');
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -81,10 +77,17 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
     setLoading(true);
     try {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const fromD = new Date(now);
+      fromD.setDate(fromD.getDate() - 3);
+      const toD = new Date(now);
+      toD.setDate(toD.getDate() + 3);
+      const toISO = (d: Date) => new Date(d).toISOString().slice(0, 10);
       const [cs, ags, asg] = await Promise.all([
-        fetchCustomers(),
-        fetchDeliveryAgents(),
-        fetchAssignments(),
+        fetchCustomers(agent?.id),
+        fetchDeliveryAgents(agent?.id),
+        fetchAssignments({ agentIds: agent?.id ? [agent.id] : [], from: toISO(fromD), to: toISO(toD) }),
       ]);
       setCustomers(cs);
       setDeliveryAgents(ags);
@@ -95,7 +98,7 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [agent?.id]);
 
   React.useEffect(() => {
     refresh();
@@ -107,33 +110,18 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
   }, []);
 
   const assignWork = React.useCallback(async (input: AssignmentInput) => {
-    const payload = {
-      ownerId: ownerId,
-      customerId: input.customerId,
-      deliveryAgentId: input.deliveryAgentId,
-      date: input.date,
-      shift: input.shift,
-      liters: input.liters,
-      delivered: input.delivered ?? false,
-    } as Omit<Assignment, 'id' | 'assignedAt' | 'unassignedAt'>;
-    if (!SUPABASE_CONFIGURED || !supabase) return;
-    const created = await insertAssignment(payload);
-    if (created) setAssignments((prev) => [...prev, created]);
+    // No-op: mappings are created in Seller app
+    setAssignments((prev) => prev);
   }, [ownerId]);
 
   const toggleDelivered = React.useCallback(async (assignmentId: string, delivered?: boolean) => {
     const current = assignments.find((a) => a.id === assignmentId);
     const nextVal = delivered ?? !current?.delivered;
-    if (SUPABASE_CONFIGURED && supabase) {
-      await updateAssignment(assignmentId, { delivered: nextVal });
-    }
+    // Only update local state; screens will persist via RPC setDeliveryStatus
     setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, delivered: !!nextVal } : a)));
   }, [assignments]);
 
   const updateAssignmentLiters = React.useCallback(async (assignmentId: string, liters: number) => {
-    if (SUPABASE_CONFIGURED && supabase) {
-      await updateAssignment(assignmentId, { liters });
-    }
     setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, liters } : a)));
   }, []);
 

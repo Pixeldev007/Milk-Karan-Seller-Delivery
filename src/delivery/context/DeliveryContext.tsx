@@ -12,6 +12,7 @@ import {
   recordDeliveryCall,
   completeDelivery,
 } from '../services/deliveryApi';
+import { useAuth } from '../context/AuthContext';
 
 type Shift = Assignment['shift'];
 
@@ -55,6 +56,7 @@ const generateId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const { agent } = useAuth();
   const [ownerId, setOwnerId] = React.useState<string>('');
   const [userId, setUserId] = React.useState<string>('');
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -91,10 +93,17 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
     setLoading(true);
     try {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const fromD = new Date(now);
+      fromD.setDate(fromD.getDate() - 7);
+      const toD = new Date(now);
+      toD.setDate(toD.getDate() + 7);
+      const toISO = (d: Date) => new Date(d).toISOString().slice(0, 10);
       const [cs, ags, asg] = await Promise.all([
-        fetchCustomers(),
-        fetchDeliveryAgents(),
-        fetchAssignments(),
+        fetchCustomers(agent?.id),
+        fetchDeliveryAgents(agent?.id),
+        fetchAssignments({ agentId: agent?.id, from: toISO(fromD), to: toISO(toD) }),
       ]);
       setCustomers(cs);
       setDeliveryAgents(ags);
@@ -105,7 +114,7 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [agent?.id]);
 
   React.useEffect(() => {
     refresh();

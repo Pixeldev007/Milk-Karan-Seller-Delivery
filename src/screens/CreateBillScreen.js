@@ -10,6 +10,9 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useEffect } from 'react';
+import { ActivityIndicator } from 'react-native';
+import { getCustomers } from '../lib/customers';
 
 function toYMD(d) {
   const year = d.getFullYear();
@@ -25,20 +28,16 @@ function addDays(date, delta) {
 }
 
 export default function CreateBillScreen() {
-  // Demo customers. You can connect to actual customers later.
-  const customers = [
-    { id: '1', name: 'Ravi Kumar', phone: '9876543210', planPerDayL: 1.0 },
-    { id: '2', name: 'Anita Sharma', phone: '9876501234', planPerDayL: 0.5 },
-    { id: '3', name: 'Karthik', phone: '9876509876', planPerDayL: 1.5 },
-  ];
-
-  const [selectedCustomer, setSelectedCustomer] = useState(customers[0]);
+  const [customers, setCustomers] = useState([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(true);
+  const [customerError, setCustomerError] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerPickerVisible, setCustomerPickerVisible] = useState(false);
 
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
 
-  const [perDayL, setPerDayL] = useState(String(selectedCustomer.planPerDayL));
+  const [perDayL, setPerDayL] = useState('');
   const [amount, setAmount] = useState('');
 
   const daysCount = useMemo(() => {
@@ -55,11 +54,15 @@ export default function CreateBillScreen() {
 
   const onPickCustomer = (c) => {
     setSelectedCustomer(c);
-    setPerDayL(String(c.planPerDayL));
+    setPerDayL(String(c.planPerDayL ?? ''));
     setCustomerPickerVisible(false);
   };
 
   const onGeneratePdf = () => {
+    if (!selectedCustomer) {
+      Alert.alert('Select Customer', 'Please select a customer first.');
+      return;
+    }
     Alert.alert('Generate PDF', `Customer: ${selectedCustomer.name}\nFrom: ${toYMD(new Date(fromDate))}\nTo: ${toYMD(new Date(toDate))}\nTotal Milk: ${totalMilkL} L\nAmount: ₹${amount || '0'}`);
   };
 
@@ -72,6 +75,45 @@ export default function CreateBillScreen() {
   const decTo = () => setToDate((d) => addDays(d, -1));
   const incTo = () => setToDate((d) => addDays(d, 1));
 
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoadingCustomers(true);
+        setCustomerError('');
+        const { data, error } = await getCustomers();
+        if (error) throw error;
+        const mapped = (data || []).map((c) => {
+          // Try to derive perDay liters from c.plan if available (e.g., "1L/day").
+          let planPerDayL = undefined;
+          if (typeof c.plan === 'string') {
+            const m = c.plan.match(/([0-9]+(?:\.[0-9]+)?)\s*[lL]/);
+            if (m) planPerDayL = parseFloat(m[1]);
+          }
+          return {
+            id: c.id,
+            name: c.name,
+            phone: c.phone || '',
+            planPerDayL,
+          };
+        });
+        if (!mounted) return;
+        setCustomers(mapped);
+        // Optionally pre-select the first customer
+        if (mapped.length) {
+          setSelectedCustomer(mapped[0]);
+          setPerDayL(String(mapped[0].planPerDayL ?? ''));
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setCustomerError(e.message || 'Failed to load customers');
+      } finally {
+        if (mounted) setLoadingCustomers(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -82,11 +124,20 @@ export default function CreateBillScreen() {
       <View style={styles.body}>
         {/* Select Customer */}
         <Text style={styles.label}>Select Customer</Text>
-        <TouchableOpacity style={styles.selectBox} onPress={() => setCustomerPickerVisible(true)}>
+        <TouchableOpacity style={styles.selectBox} onPress={() => setCustomerPickerVisible(true)} disabled={loadingCustomers}>
           <Ionicons name="person" size={18} color="#666" />
-          <Text style={styles.selectText}>{selectedCustomer.name} ({selectedCustomer.phone})</Text>
+          {loadingCustomers ? (
+            <Text style={styles.selectText}>Loading customers...</Text>
+          ) : selectedCustomer ? (
+            <Text style={styles.selectText}>{selectedCustomer.name} ({selectedCustomer.phone})</Text>
+          ) : (
+            <Text style={styles.selectText}>Select customer</Text>
+          )}
           <Ionicons name="chevron-down" size={18} color="#666" />
         </TouchableOpacity>
+        {!!customerError && (
+          <Text style={{ color: '#c62828', marginTop: 4 }}>{customerError}</Text>
+        )}
 
         {/* From Date / To Date */}
         <Text style={[styles.label, { marginTop: 14 }]}>From Date / To Date</Text>
@@ -119,7 +170,7 @@ export default function CreateBillScreen() {
 
         {/* Per Day and Total Milk */}
         <View style={styles.inlineRow}>
-          <View style={[styles.flexItem, { marginRight: 8 }]}>
+          <View style={[styles.flexItem, { marginRight: 8 }]}> 
             <Text style={styles.label}>Per Day (L)</Text>
             <TextInput
               style={styles.input}
@@ -129,7 +180,7 @@ export default function CreateBillScreen() {
               placeholder="e.g., 1.0"
             />
           </View>
-          <View style={[styles.flexItem, { marginLeft: 8 }]}>
+          <View style={[styles.flexItem, { marginLeft: 8 }]}> 
             <Text style={styles.label}>Total Milk (L)</Text>
             <View style={[styles.input, { justifyContent: 'center' }]}> 
               <Text style={{ fontWeight: '700', color: '#2e7d32' }}>{totalMilkL}</Text>
@@ -165,12 +216,18 @@ export default function CreateBillScreen() {
         <View style={styles.modalBackdrop}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Customer</Text>
-            {customers.map((c) => (
-              <TouchableOpacity key={c.id} style={styles.modalItem} onPress={() => onPickCustomer(c)}>
-                <Ionicons name="person-circle-outline" size={22} color="#66BB6A" />
-                <Text style={styles.modalItemText}>{c.name} ({c.phone})</Text>
-              </TouchableOpacity>
-            ))}
+            {loadingCustomers ? (
+              <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+                <ActivityIndicator color="#66BB6A" />
+              </View>
+            ) : (
+              customers.map((c) => (
+                <TouchableOpacity key={c.id} style={styles.modalItem} onPress={() => onPickCustomer(c)}>
+                  <Ionicons name="person-circle-outline" size={22} color="#66BB6A" />
+                  <Text style={styles.modalItemText}>{c.name} ({c.phone})</Text>
+                </TouchableOpacity>
+              ))
+            )}
             <View style={styles.modalActions}>
               <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setCustomerPickerVisible(false)}>
                 <Text style={[styles.modalBtnText, { color: '#333' }]}>Close</Text>

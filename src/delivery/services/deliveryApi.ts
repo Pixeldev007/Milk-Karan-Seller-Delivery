@@ -1,16 +1,30 @@
 import { SUPABASE_CONFIGURED, supabase } from '../lib/supabaseClient';
 import type { Assignment, Customer, DeliveryAgent } from '../data/mock';
 
-export async function fetchCustomers(): Promise<Customer[]> {
+export async function fetchCustomers(agentId?: string): Promise<Customer[]> {
   if (!SUPABASE_CONFIGURED || !supabase) return [];
-  const { data: u } = await supabase.auth.getUser();
-  const ownerId = u?.user?.id;
-  let query = supabase
+  // If agentId provided, prefer RPC to bypass RLS constraints
+  if (agentId) {
+    const { data: rpc } = await supabase.rpc('get_agent_customers', { p_agent_id: agentId });
+    return (rpc || []).map((r: any) => ({
+      id: r.id,
+      userId: r.user_id,
+      name: r.name,
+      phone: r.phone,
+      address: r.address ?? undefined,
+      product: (r.product as any) ?? 'Buffalo Milk',
+      rate: Number((r.rate as any) ?? 0),
+      plan: r.plan ?? '',
+      planType: r.plan_type ?? 'Daily',
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+  }
+  // Otherwise, attempt direct select (when authenticated)
+  const { data, error } = await supabase
     .from('customers')
-    // Only select columns we are sure exist per provided schema to avoid errors
-    .select('id,user_id,name,phone,address,plan,plan_type,created_at,updated_at');
-  if (ownerId) query = query.eq('user_id', ownerId);
-  const { data, error } = await query.order('name', { ascending: true });
+    .select('id,user_id,name,phone,address,plan,plan_type,created_at,updated_at')
+    .order('name', { ascending: true });
   if (error) throw error;
   return (data || []).map((r: any) => ({
     id: r.id,
@@ -18,7 +32,6 @@ export async function fetchCustomers(): Promise<Customer[]> {
     name: r.name,
     phone: r.phone,
     address: r.address ?? undefined,
-    // Fallbacks if product/rate not present in schema
     product: (r.product as any) ?? 'Buffalo Milk',
     rate: Number((r.rate as any) ?? 0),
     plan: r.plan ?? '',
@@ -82,15 +95,27 @@ export async function updateAssignment(
   if (error) throw error;
 }
 
-export async function fetchDeliveryAgents(): Promise<DeliveryAgent[]> {
+export async function fetchDeliveryAgents(agentId?: string): Promise<DeliveryAgent[]> {
   if (!SUPABASE_CONFIGURED || !supabase) return [];
-  const { data: u } = await supabase.auth.getUser();
-  const ownerId = u?.user?.id;
-  let query = supabase
+  // If agentId provided, prefer RPC to bypass RLS constraints
+  if (agentId) {
+    const { data: rpc } = await supabase.rpc('get_agent_delivery_agents', { p_agent_id: agentId });
+    return (rpc || []).map((r: any) => ({
+      id: r.id,
+      ownerId: r.owner_id,
+      name: r.name,
+      phone: r.phone,
+      area: r.area ?? undefined,
+      loginId: r.login_id ?? undefined,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+  }
+  // Otherwise, attempt direct select (when authenticated)
+  const { data, error } = await supabase
     .from('delivery_agents')
-    .select('id,owner_id,name,phone,area,login_id,created_at,updated_at');
-  if (ownerId) query = query.eq('owner_id', ownerId);
-  const { data, error } = await query.order('name', { ascending: true });
+    .select('id,owner_id,name,phone,area,login_id,created_at,updated_at')
+    .order('name', { ascending: true });
   if (error) throw error;
   return (data || []).map((r: any) => ({
     id: r.id,
@@ -106,42 +131,36 @@ export async function fetchDeliveryAgents(): Promise<DeliveryAgent[]> {
 
 export async function fetchAssignments(params?: { from?: string; to?: string; agentId?: string }): Promise<Assignment[]> {
   if (!SUPABASE_CONFIGURED || !supabase) return [];
-  // Try selecting full schema first
+  // Prefer view scoped by agent/date; do NOT filter by owner_id here
   try {
-    const { data: u } = await supabase.auth.getUser();
-    const ownerId = u?.user?.id;
     let query = supabase
       .from('delivery_assignments_view')
       .select('id,owner_id,delivery_agent_id,customer_id,date,shift,liters,delivered,assigned_at,unassigned_at');
-    if (ownerId) query = query.eq('owner_id', ownerId);
-    if (params?.from) query = query.gte('date', params.from);
-    if (params?.to) query = query.lte('date', params.to);
     if (params?.agentId) query = query.eq('delivery_agent_id', params.agentId);
     const { data, error } = await query.order('date', { ascending: true }).order('shift', { ascending: true });
     if (error) throw error;
-    // If no daily rows exist yet, fallback to base table to show raw assignments
     if (!data || data.length === 0) {
-      let q2 = supabase
-        .from('delivery_assignments')
-        .select('id,owner_id,delivery_agent_id,customer_id,assigned_at,unassigned_at');
-      if (ownerId) q2 = q2.eq('owner_id', ownerId);
-      const { data: base, error: e2 } = await q2.order('assigned_at', { ascending: false });
-      if (e2) throw e2;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const iso = today.toISOString().slice(0, 10);
-      return (base || []).map((r: any) => ({
-        id: r.id,
-        ownerId: r.owner_id,
-        customerId: r.customer_id,
-        deliveryAgentId: r.delivery_agent_id,
-        date: iso,
-        shift: 'morning',
-        liters: 0,
-        delivered: false,
-        assignedAt: r.assigned_at,
-        unassignedAt: r.unassigned_at ?? null,
-      }));
+      // Fallback to RPC that derives assignments for the agent within range
+      if (params?.agentId) {
+        const { data: rpc } = await supabase.rpc('get_agent_assignments', {
+          p_agent_id: params.agentId,
+          p_from: null,
+          p_to: null,
+        });
+        return (rpc || []).map((r: any) => ({
+          id: r.id,
+          ownerId: r.owner_id,
+          customerId: r.customer_id,
+          deliveryAgentId: r.delivery_agent_id,
+          date: r.date,
+          shift: (r.shift as any) ?? 'morning',
+          liters: Number(r.liters ?? 0),
+          delivered: Boolean(r.delivered),
+          assignedAt: r.assigned_at,
+          unassignedAt: r.unassigned_at ?? null,
+        }));
+      }
+      return [];
     }
     return (data || []).map((r: any) => ({
       id: r.id,
@@ -155,31 +174,32 @@ export async function fetchAssignments(params?: { from?: string; to?: string; ag
       assignedAt: r.assigned_at,
       unassignedAt: r.unassigned_at ?? null,
     }));
-  } catch (_err) {
-    // Fallback to minimal columns if some don't exist yet; synthesize defaults for UI
-    const { data: u2 } = await supabase.auth.getUser();
-    const ownerId2 = u2?.user?.id;
-    let query = supabase
-      .from('delivery_assignments')
-      .select('id,owner_id,delivery_agent_id,customer_id,assigned_at,unassigned_at');
-    if (ownerId2) query = query.eq('owner_id', ownerId2);
-    const { data, error } = await query.order('assigned_at', { ascending: false });
-    if (error) throw error;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const iso = today.toISOString().slice(0, 10);
-    return (data || []).map((r: any) => ({
-      id: r.id,
-      ownerId: r.owner_id,
-      customerId: r.customer_id,
-      deliveryAgentId: r.delivery_agent_id,
-      date: iso,
-      shift: 'morning',
-      liters: 0,
-      delivered: false,
-      assignedAt: r.assigned_at,
-      unassignedAt: r.unassigned_at ?? null,
-    }));
+  } catch (_e) {
+    // On any error, attempt RPC for the agent, otherwise return []
+    if (params?.agentId) {
+      try {
+        const { data: rpc } = await supabase.rpc('get_agent_assignments', {
+          p_agent_id: params.agentId,
+          p_from: null,
+          p_to: null,
+        });
+        return (rpc || []).map((r: any) => ({
+          id: r.id,
+          ownerId: r.owner_id,
+          customerId: r.customer_id,
+          deliveryAgentId: r.delivery_agent_id,
+          date: r.date,
+          shift: (r.shift as any) ?? 'morning',
+          liters: Number(r.liters ?? 0),
+          delivered: Boolean(r.delivered),
+          assignedAt: r.assigned_at,
+          unassignedAt: r.unassigned_at ?? null,
+        }));
+      } catch {
+        return [];
+      }
+    }
+    return [];
   }
 }
 

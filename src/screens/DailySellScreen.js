@@ -9,6 +9,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenContainer from '../components/ScreenContainer';
+import { useEffect } from 'react';
+import { ActivityIndicator } from 'react-native';
+import { listDeliveryAgents } from '../lib/delivery';
+import { listDailyDeliveries, toggleDeliveryStatus } from '../lib/dailyDeliveries';
 
 function toYMD(d) {
   const year = d.getFullYear();
@@ -20,25 +24,63 @@ function toYMD(d) {
 export default function DailySellScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedDBoy, setSelectedDBoy] = useState('all');
+  const [agents, setAgents] = useState([{ id: 'all', name: 'All Delivery Boys' }]);
+  const [loadingAgents, setLoadingAgents] = useState(false);
+  const [loadingSales, setLoadingSales] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [sales, setSales] = useState([]);
   const todayKey = toYMD(selectedDate);
 
-  // Demo delivery boys
-  const deliveryBoys = [
-    { id: 'all', name: 'All Delivery Boys' },
-    { id: '1', name: 'Suresh' },
-    { id: '2', name: 'Mahesh' },
-  ];
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoadingAgents(true);
+        const list = await listDeliveryAgents();
+        if (!mounted) return;
+        const mapped = [{ id: 'all', name: 'All Delivery Boys' }].concat(
+          (list || []).map((a) => ({ id: a.id, name: a.name }))
+        );
+        setAgents(mapped);
+      } catch (e) {
+        if (!mounted) return;
+        setErrorMsg(e.message || 'Failed to load delivery agents');
+      } finally {
+        if (mounted) setLoadingAgents(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
-  // Demo data for daily sells
-  const [sales, setSales] = useState([
-    { id: '1', date: toYMD(new Date()), customerName: 'Ravi Kumar', qty: '1.0 L', status: 'Delivered', deliveryBoyId: '1' },
-    { id: '2', date: toYMD(new Date()), customerName: 'Anita Sharma', qty: '0.5 L', status: 'Pending', deliveryBoyId: '2' },
-    { id: '3', date: toYMD(new Date(Date.now() - 86400000)), customerName: 'Karthik', qty: '1.0 L', status: 'Delivered', deliveryBoyId: '1' },
-  ]);
+  const loadSales = useMemo(() => async () => {
+    try {
+      setLoadingSales(true);
+      setErrorMsg('');
+      const data = await listDailyDeliveries({ date: todayKey, deliveryAgentId: selectedDBoy });
+      setSales(
+        (data || []).map((row) => ({
+          id: row.id,
+          date: row.date,
+          customerName: row.customer?.name || '—',
+          qty: `${Number(row.quantity).toFixed(1)} L`,
+          status: row.status,
+          deliveryBoyId: row.deliveryAgent?.id || null,
+          deliveryBoyName: row.deliveryAgent?.name || null,
+        }))
+      );
+    } catch (e) {
+      setErrorMsg(e.message || 'Failed to load daily deliveries');
+      setSales([]);
+    } finally {
+      setLoadingSales(false);
+    }
+  }, [todayKey, selectedDBoy]);
 
-  const filtered = useMemo(() => {
-    return sales.filter((s) => s.date === todayKey && (selectedDBoy === 'all' || s.deliveryBoyId === selectedDBoy));
-  }, [sales, todayKey, selectedDBoy]);
+  useEffect(() => {
+    loadSales();
+  }, [loadSales]);
+
+  const filtered = useMemo(() => sales, [sales]);
 
   const shiftDate = (days) => {
     const d = new Date(selectedDate);
@@ -47,11 +89,19 @@ export default function DailySellScreen() {
   };
 
   const toggleStatus = (id) => {
-    setSales((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, status: s.status === 'Delivered' ? 'Pending' : 'Delivered' } : s
-      )
-    );
+    setSales((prev) => {
+      const current = prev.find((s) => s.id === id);
+      const next = current?.status === 'Delivered' ? 'Pending' : 'Delivered';
+      (async () => {
+        try {
+          await toggleDeliveryStatus(id, next);
+        } catch (_) {
+          // revert on failure
+          loadSales();
+        }
+      })();
+      return prev.map((s) => (s.id === id ? { ...s, status: next } : s));
+    });
   };
 
   const renderItem = ({ item }) => (
@@ -59,6 +109,9 @@ export default function DailySellScreen() {
       <View style={{ flex: 1 }}>
         <Text style={styles.name}>{item.customerName}</Text>
         <Text style={styles.sub}>Qty: {item.qty}</Text>
+        {item.deliveryBoyName ? (
+          <Text style={[styles.sub, { color: '#555' }]}>Agent: {item.deliveryBoyName}</Text>
+        ) : null}
       </View>
       <View style={styles.statusWrap}>
         <View style={[styles.statusPill, item.status === 'Delivered' ? styles.okPill : styles.pendingPill]}>
@@ -102,7 +155,7 @@ export default function DailySellScreen() {
           <Ionicons name="person" size={16} color="#777" />
           <Text style={styles.dboyLabel}>Delivery Boy:</Text>
           <View style={styles.dboyPicker}>
-            {deliveryBoys.map((db) => (
+            {agents.map((db) => (
               <TouchableOpacity
                 key={db.id}
                 onPress={() => setSelectedDBoy(db.id)}
@@ -118,18 +171,24 @@ export default function DailySellScreen() {
       </View>
 
       {/* List */}
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 40 }}
-        ListEmptyComponent={() => (
-          <View style={styles.empty}> 
-            <Ionicons name="water-outline" size={48} color="#bbb" />
-            <Text style={styles.emptyText}>No sales for this date/filter</Text>
-          </View>
-        )}
-      />
+      {loadingSales ? (
+        <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+          <ActivityIndicator size="small" color="#66BB6A" />
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          ListEmptyComponent={() => (
+            <View style={styles.empty}> 
+              <Ionicons name="water-outline" size={48} color="#bbb" />
+              <Text style={styles.emptyText}>{errorMsg || 'No sales for this date/filter'}</Text>
+            </View>
+          )}
+        />
+      )}
       </ScreenContainer>
     </View>
   );

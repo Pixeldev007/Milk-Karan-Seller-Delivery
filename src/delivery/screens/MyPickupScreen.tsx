@@ -151,6 +151,8 @@ export const MyPickupScreen: React.FC = () => {
                           : (Number.isFinite(assignment.liters) && (assignment.liters as number) > 0
                               ? (assignment.liters as number)
                               : (Number.isFinite(litersToUse) ? litersToUse : 0));
+                        // Optimistic update first so the UI switch stays in sync immediately
+                        toggleDelivered(assignment.id, assignment.shift || 'morning', value);
                         await setDeliveryStatus(
                           assignment.id,
                           todayLocal,
@@ -158,12 +160,12 @@ export const MyPickupScreen: React.FC = () => {
                           value,
                           qty,
                         );
-                        toggleDelivered(assignment.id, assignment.shift || 'morning', value);
-                        await refresh();
                         Alert.alert(
                           value ? 'Marked Delivered' : 'Marked Pending',
                           `${customer?.name || 'Customer'} • ${assignment.shift || 'morning'} • ${qty} L`
                         );
+                        // Light refresh after confirmation to pick up any server-side changes
+                        await refresh();
                       } catch (e: any) {
                         Alert.alert('Update failed', e?.message || 'Could not update delivery status.');
                       }

@@ -3,24 +3,20 @@ import { requireUser } from './session';
 
 export async function listDailyDeliveries({ date, deliveryAgentId }) {
   const user = await requireUser();
-  // Join daily_deliveries -> delivery_assignments to get agent and customer
-  // and embed agent/customer details for UI
+  // Query daily_deliveries with current schema fields and join FKs explicitly
   let query = supabase
     .from('daily_deliveries')
     .select(`
-      id, date, shift, liters, delivered,
-      delivery_assignments:delivery_assignments!inner(
-        id, delivery_agent_id, customer_id,
-        delivery_agents:delivery_agents(id, name, phone),
-        customers:customers(id, name, phone)
-      )
+      id, delivery_date, shift, quantity, status, delivery_agent_id, customer_id,
+      agent:delivery_agents!daily_deliveries_delivery_agent_id_fkey(id, name, phone),
+      customer:customers!daily_deliveries_customer_id_fkey(id, name, phone)
     `)
     .eq('owner_id', user.id)
-    .eq('date', date)
+    .eq('delivery_date', date)
     .order('updated_at', { ascending: false });
 
   if (deliveryAgentId && deliveryAgentId !== 'all') {
-    query = query.eq('delivery_assignments.delivery_agent_id', deliveryAgentId);
+    query = query.eq('delivery_agent_id', deliveryAgentId);
   }
 
   const { data, error } = await query;
@@ -28,22 +24,15 @@ export async function listDailyDeliveries({ date, deliveryAgentId }) {
 
   return (data ?? []).map((row) => ({
     id: row.id,
-    date: row.date,
-    quantity: Number(row.liters ?? 0),
-    status: row.delivered ? 'Delivered' : 'Pending',
-    deliveryAgent: row.delivery_assignments?.delivery_agents
-      ? {
-          id: row.delivery_assignments.delivery_agents.id,
-          name: row.delivery_assignments.delivery_agents.name,
-          phone: row.delivery_assignments.delivery_agents.phone,
-        }
+    date: row.delivery_date,
+    quantity: Number(row.quantity ?? 0),
+    status: row.status,
+    delivered: row.status === 'Delivered',
+    deliveryAgent: row.agent
+      ? { id: row.agent.id, name: row.agent.name, phone: row.agent.phone }
       : null,
-    customer: row.delivery_assignments?.customers
-      ? {
-          id: row.delivery_assignments.customers.id,
-          name: row.delivery_assignments.customers.name,
-          phone: row.delivery_assignments.customers.phone,
-        }
+    customer: row.customer
+      ? { id: row.customer.id, name: row.customer.name, phone: row.customer.phone }
       : null,
   }));
 }

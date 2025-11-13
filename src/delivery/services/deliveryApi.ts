@@ -298,12 +298,36 @@ export async function completeDelivery(
 export async function findCustomerByNamePhone(name: string, phone: string): Promise<Customer | null> {
   if (!SUPABASE_CONFIGURED || !supabase) return null;
   const n = name.trim();
-  const p = phone.trim();
+  const p = phone.replace(/\D+/g, '').trim();
+  // Try SECURITY DEFINER RPC (bypasses RLS for anon users)
+  try {
+    const { data: rpc } = await supabase.rpc('login_customer_by_name_phone', {
+      p_name: n,
+      p_phone: p,
+    });
+    const row: any = Array.isArray(rpc) ? rpc?.[0] : rpc;
+    if (row) {
+      return {
+        id: row.id,
+        userId: row.user_id,
+        name: row.name,
+        phone: row.phone,
+        address: row.address ?? undefined,
+        product: (row.product as any) ?? 'Buffalo Milk',
+        rate: Number((row.rate as any) ?? 0),
+        plan: row.plan ?? '',
+        planType: row.plan_type ?? 'Daily',
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+    }
+  } catch {}
+  // Fallback: direct select (only if RLS allows)
   const { data, error } = await supabase
     .from('customers')
-    .select('id,user_id,name,phone,address,plan,plan_type,created_at,updated_at')
-    .eq('name', n)
-    .eq('phone', p)
+    .select('id,user_id,name,phone,address,plan,plan_type,product,rate,created_at,updated_at')
+    .ilike('name', n)
+    .or(`phone.eq.${p},phone.eq.+91${p}`)
     .limit(1)
     .maybeSingle();
   if (error) throw error;
@@ -314,9 +338,8 @@ export async function findCustomerByNamePhone(name: string, phone: string): Prom
     name: data.name,
     phone: data.phone,
     address: data.address ?? undefined,
-    // Using safe defaults here because product/rate may not exist in the provided schema
-    product: 'Buffalo Milk',
-    rate: 0,
+    product: (data.product as any) ?? 'Buffalo Milk',
+    rate: Number((data.rate as any) ?? 0),
     plan: data.plan ?? '',
     planType: data.plan_type ?? 'Daily',
     createdAt: data.created_at,

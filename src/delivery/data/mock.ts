@@ -10,6 +10,7 @@ export type Customer = {
   rate: number; // per liter in INR
   plan: string;
   planType: string;
+  preferredShift?: 'morning' | 'evening';
   createdAt: string;
   updatedAt: string;
 };

@@ -38,7 +38,7 @@ type DeliveryContextValue = {
   connected: boolean;
   addCustomer: (input: NewCustomerInput) => void;
   assignWork: (input: AssignmentInput) => void;
-  toggleDelivered: (assignmentId: string, delivered?: boolean) => void;
+  toggleDelivered: (assignmentId: string, shift: Shift, delivered?: boolean) => void;
   updateAssignmentLiters: (assignmentId: string, liters: number) => void;
   getCustomerById: (id: string) => Customer | undefined;
   getDeliveryAgentById: (id: string) => DeliveryAgent | undefined;
@@ -140,14 +140,21 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
     if (created) setAssignments((prev) => [...prev, created]);
   }, [ownerId]);
 
-  const toggleDelivered = React.useCallback(async (assignmentId: string, delivered?: boolean) => {
-    const current = assignments.find((a) => a.id === assignmentId);
+  const toggleDelivered = React.useCallback(async (assignmentId: string, shift: Shift, delivered?: boolean) => {
+    const current = assignments.find((a) => a.id === assignmentId && a.shift === shift);
     const nextVal = delivered ?? !current?.delivered;
-    // Persist via RPC to daily_deliveries using date/shift
-    if (SUPABASE_CONFIGURED && supabase && current?.date && current?.shift) {
-      await setDeliveryStatus(assignmentId, current.date, current.shift, !!nextVal, current.liters);
+    if (
+      SUPABASE_CONFIGURED &&
+      supabase &&
+      current?.date &&
+      current?.shift &&
+      Number.isFinite((current?.liters as unknown) as number)
+    ) {
+      await setDeliveryStatus(assignmentId, current.date, current.shift, !!nextVal, (current!.liters as number));
     }
-    setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, delivered: !!nextVal } : a)));
+    setAssignments((prev) =>
+      prev.map((a) => (a.id === assignmentId && a.shift === shift ? { ...a, delivered: !!nextVal } : a)),
+    );
   }, [assignments]);
 
   const updateAssignmentLiters = React.useCallback(async (assignmentId: string, liters: number) => {

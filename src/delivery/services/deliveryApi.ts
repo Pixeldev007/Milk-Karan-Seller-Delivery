@@ -16,6 +16,7 @@ export async function fetchCustomers(agentId?: string): Promise<Customer[]> {
       rate: Number((r.rate as any) ?? 0),
       plan: r.plan ?? '',
       planType: r.plan_type ?? 'Daily',
+      preferredShift: (r.preferred_shift as any) ?? undefined,
       createdAt: r.created_at,
       updatedAt: r.updated_at,
     }));
@@ -23,7 +24,7 @@ export async function fetchCustomers(agentId?: string): Promise<Customer[]> {
   // Otherwise, attempt direct select (when authenticated)
   const { data, error } = await supabase
     .from('customers')
-    .select('id,user_id,name,phone,address,plan,plan_type,created_at,updated_at')
+    .select('id,user_id,name,phone,address,plan,plan_type,preferred_shift,created_at,updated_at')
     .order('name', { ascending: true });
   if (error) throw error;
   return (data || []).map((r: any) => ({
@@ -36,6 +37,7 @@ export async function fetchCustomers(agentId?: string): Promise<Customer[]> {
     rate: Number((r.rate as any) ?? 0),
     plan: r.plan ?? '',
     planType: r.plan_type ?? 'Daily',
+    preferredShift: (r.preferred_shift as any) ?? undefined,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   }));
@@ -131,50 +133,34 @@ export async function fetchDeliveryAgents(agentId?: string): Promise<DeliveryAge
 
 export async function fetchAssignments(params?: { from?: string; to?: string; agentId?: string }): Promise<Assignment[]> {
   if (!SUPABASE_CONFIGURED || !supabase) return [];
-  // Prefer view scoped by agent/date; do NOT filter by owner_id here
-  try {
-    let query = supabase
-      .from('delivery_assignments_view')
-      .select('id,owner_id,delivery_agent_id,customer_id,date,shift,liters,delivered,assigned_at,unassigned_at');
-    if (params?.agentId) query = query.eq('delivery_agent_id', params.agentId);
-    const { data, error } = await query.order('date', { ascending: true }).order('shift', { ascending: true });
-    if (error) throw error;
-    // Build a local YYYY-MM-DD for today to align with DB date type
-    const todayStr = (() => {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    })();
+  // Build a local YYYY-MM-DD for today to align with DB date type
+  const todayStr = (() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  })();
 
-    // Prefer only today's morning shift to avoid duplicate morning/evening rows in simplified UI
-    const filtered = (data || []).filter((r: any) => r.date === todayStr && (r.shift === 'morning' || r.shift == null));
-
-    // Deduplicate by customer_id in case of any residual duplicates from joins
-    const uniqueByCustomer = new Map<string, any>();
-    for (const r of filtered) {
-      if (!uniqueByCustomer.has(r.customer_id)) uniqueByCustomer.set(r.customer_id, r);
-    }
-
-    const filteredData = Array.from(uniqueByCustomer.values());
-
-    if (!filteredData || filteredData.length === 0) {
-      // Fallback to RPC that derives assignments for the agent within range
-      if (params?.agentId) {
-        const { data: rpc } = await supabase.rpc('get_agent_assignments', {
-          p_agent_id: params.agentId,
-          p_from: todayStr,
-          p_to: todayStr,
-        });
-        // Filter to morning and dedupe by customer
-        const rpcMorning = (rpc || []).filter((r: any) => (r.shift ?? 'morning') === 'morning');
-        const seen = new Map<string, any>();
-        for (const r of rpcMorning) {
-          if (!seen.has(r.customer_id)) seen.set(r.customer_id, r);
-        }
-        return Array.from(seen.values()).map((r: any) => ({
-          id: r.id,
+  // Prefer RPC first (ensures id = delivery_assignments.id). View is fallback only.
+  if (params?.agentId) {
+    try {
+      const { data: rpc } = await supabase.rpc('get_agent_assignments', {
+        p_agent_id: params.agentId,
+        p_from: todayStr,
+        p_to: todayStr,
+      });
+      // Include both shifts; dedupe by customer+shift in case of duplicates
+      const seen = new Map<string, any>();
+      for (const r of rpc || []) {
+        if (r.date !== todayStr) continue;
+        const key = `${r.customer_id}-${r.shift || 'morning'}`;
+        if (!seen.has(key)) seen.set(key, r);
+      }
+      const rows = Array.from(seen.values());
+      if (rows.length > 0) {
+        return rows.map((r: any) => ({
+          id: r.id, // assignment id
           ownerId: r.owner_id,
           customerId: r.customer_id,
           deliveryAgentId: r.delivery_agent_id,
@@ -186,9 +172,27 @@ export async function fetchAssignments(params?: { from?: string; to?: string; ag
           unassignedAt: r.unassigned_at ?? null,
         }));
       }
-      return [];
+    } catch (_e) {
+      // fall through to view
     }
-    return (filteredData || []).map((r: any) => ({
+  }
+
+  // Fallback: use view (id may be daily_deliveries.id, so toggling may be limited)
+  try {
+    let query = supabase
+      .from('delivery_assignments_view')
+      .select('id,owner_id,delivery_agent_id,customer_id,date,shift,liters,delivered,assigned_at,unassigned_at');
+    if (params?.agentId) query = query.eq('delivery_agent_id', params.agentId);
+    const { data, error } = await query.order('date', { ascending: true }).order('shift', { ascending: true });
+    if (error) throw error;
+    const filtered = (data || []).filter((r: any) => r.date === todayStr);
+    const uniqueByCustomerShift = new Map<string, any>();
+    for (const r of filtered) {
+      const key = `${r.customer_id}-${r.shift || 'morning'}`;
+      if (!uniqueByCustomerShift.has(key)) uniqueByCustomerShift.set(key, r);
+    }
+    const filteredData = Array.from(uniqueByCustomerShift.values());
+    return filteredData.map((r: any) => ({
       id: r.id,
       ownerId: r.owner_id,
       customerId: r.customer_id,
@@ -200,37 +204,7 @@ export async function fetchAssignments(params?: { from?: string; to?: string; ag
       assignedAt: r.assigned_at,
       unassignedAt: r.unassigned_at ?? null,
     }));
-  } catch (_e) {
-    // On any error, attempt RPC for the agent, otherwise return []
-    if (params?.agentId) {
-      try {
-        const { data: rpc } = await supabase.rpc('get_agent_assignments', {
-          p_agent_id: params.agentId,
-          p_from: null,
-          p_to: null,
-        });
-        // When falling back, still prefer morning and dedupe by customer
-        const rpcMorning = (rpc || []).filter((r: any) => (r.shift ?? 'morning') === 'morning');
-        const seen = new Map<string, any>();
-        for (const r of rpcMorning) {
-          if (!seen.has(r.customer_id)) seen.set(r.customer_id, r);
-        }
-        return Array.from(seen.values()).map((r: any) => ({
-          id: r.id,
-          ownerId: r.owner_id,
-          customerId: r.customer_id,
-          deliveryAgentId: r.delivery_agent_id,
-          date: r.date,
-          shift: (r.shift as any) ?? 'morning',
-          liters: Number(r.liters ?? 0),
-          delivered: Boolean(r.delivered),
-          assignedAt: r.assigned_at,
-          unassignedAt: r.unassigned_at ?? null,
-        }));
-      } catch {
-        return [];
-      }
-    }
+  } catch {
     return [];
   }
 }
@@ -278,7 +252,7 @@ export async function setDeliveryStatus(
     p_date: date,
     p_shift: shift,
     p_delivered: delivered,
-    p_liters: liters ?? null,
+    p_liters: (Number.isFinite(liters as number) ? (liters as number) : 0),
   });
   if (error) throw error;
 }

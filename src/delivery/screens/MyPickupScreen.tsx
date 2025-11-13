@@ -46,13 +46,38 @@ export const MyPickupScreen: React.FC = () => {
   );
 
   const agentAssignments = React.useMemo(() => {
-    return assignments
-      .filter((a) => (deliveryAgent?.id ? a.deliveryAgentId === deliveryAgent.id : true))
-      .sort((a, b) => {
-        const customerA = getCustomerById(a.customerId);
-        const customerB = getCustomerById(b.customerId);
-        return (customerA?.name || '').localeCompare(customerB?.name || '');
-      });
+    const filtered = assignments.filter((a) => (deliveryAgent?.id ? a.deliveryAgentId === deliveryAgent.id : true));
+    const pickByCustomer = new Map<string, typeof assignments[number]>();
+    for (const a of filtered) {
+      const cust = getCustomerById(a.customerId);
+      const preferred = cust?.preferredShift as ('morning' | 'evening' | undefined);
+      const existing = pickByCustomer.get(a.customerId);
+      if (!existing) {
+        pickByCustomer.set(a.customerId, a);
+        continue;
+      }
+      // If seller set a preferred shift, keep the one matching it
+      if (preferred) {
+        if (a.shift === preferred && existing.shift !== preferred) {
+          pickByCustomer.set(a.customerId, a);
+          continue;
+        }
+        if (existing.shift === preferred && a.shift !== preferred) {
+          continue;
+        }
+      }
+      // Otherwise prefer morning over evening
+      if (a.shift === 'morning' && existing.shift === 'evening') {
+        pickByCustomer.set(a.customerId, a);
+      }
+    }
+    const arr = Array.from(pickByCustomer.values());
+    arr.sort((a, b) => {
+      const customerA = getCustomerById(a.customerId);
+      const customerB = getCustomerById(b.customerId);
+      return (customerA?.name || '').localeCompare(customerB?.name || '');
+    });
+    return arr;
   }, [assignments, deliveryAgent?.id, getCustomerById]);
   
   // Only display customer details.
@@ -89,10 +114,12 @@ export const MyPickupScreen: React.FC = () => {
           agentAssignments.map((assignment) => {
             const customer = getCustomerById(assignment.customerId);
             const planLiters = (() => {
-              const m = (customer?.plan || '').match(/([0-9]+(?:\.[0-9]+)?)\s*[lL]/);
+              const planText = String(customer?.plan || '');
+              // Accept '1', '1 L', '1L', '1.0 litre', etc.
+              const m = planText.match(/([0-9]+(?:\.[0-9]+)?)/);
               return m ? Number(m[1]) : 0;
             })();
-            const litersToUse = assignment.liters > 0 ? assignment.liters : planLiters;
+            const litersToUse = assignment.liters && assignment.liters > 0 ? assignment.liters : planLiters;
             const todayLocal = (() => {
               const d = new Date();
               const y = d.getFullYear();
@@ -101,12 +128,15 @@ export const MyPickupScreen: React.FC = () => {
               return `${y}-${m}-${da}`;
             })();
             return (
-              <View key={assignment.id} style={styles.assignmentCard}>
+              <View key={`${assignment.id}-${assignment.shift || 'morning'}`} style={styles.assignmentCard}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.assignmentName}>{customer?.name ?? 'Unknown Customer'}</Text>
                   {!!customer?.phone && <Text style={styles.assignmentMeta}>{customer.phone}</Text>}
                   {!!customer?.address && <Text style={styles.assignmentMeta}>{customer.address}</Text>}
                   {!!customer?.product && <Text style={styles.assignmentMeta}>Product: {customer.product}</Text>}
+                  <Text style={styles.assignmentMeta}>
+                    Shift: {(assignment.shift || 'morning') === 'evening' ? 'Evening' : 'Morning'}
+                  </Text>
                   {!!customer?.plan && <Text style={styles.assignmentMeta}>Plan: {customer.plan}</Text>}
                 </View>
                 <View style={styles.switchWrap}>
@@ -115,15 +145,25 @@ export const MyPickupScreen: React.FC = () => {
                     value={assignment.delivered}
                     onValueChange={async (value) => {
                       try {
+                        // Always provide a non-null, numeric liters value
+                        const qty = value
+                          ? (Number.isFinite(litersToUse) && litersToUse > 0 ? litersToUse : 0)
+                          : (Number.isFinite(assignment.liters) && (assignment.liters as number) > 0
+                              ? (assignment.liters as number)
+                              : (Number.isFinite(litersToUse) ? litersToUse : 0));
                         await setDeliveryStatus(
                           assignment.id,
                           todayLocal,
-                          'morning',
+                          assignment.shift || 'morning',
                           value,
-                          value ? litersToUse : assignment.liters,
+                          qty,
                         );
-                        toggleDelivered(assignment.id, value);
+                        toggleDelivered(assignment.id, assignment.shift || 'morning', value);
                         await refresh();
+                        Alert.alert(
+                          value ? 'Marked Delivered' : 'Marked Pending',
+                          `${customer?.name || 'Customer'} • ${assignment.shift || 'morning'} • ${qty} L`
+                        );
                       } catch (e: any) {
                         Alert.alert('Update failed', e?.message || 'Could not update delivery status.');
                       }

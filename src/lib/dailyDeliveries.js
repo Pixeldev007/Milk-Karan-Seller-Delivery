@@ -48,18 +48,33 @@ export async function listDailyDeliveries({ date, deliveryAgentId }) {
   }));
 }
 
-export async function toggleDeliveryStatus(id, nextStatus) {
-  const user = await requireUser();
-  const delivered = nextStatus === 'Delivered';
+export async function listCustomerDeliveries({ date }) {
+  // Customer app: get the current customer's id
+  const { data: customer, error: custError } = await supabase
+    .from('customers')
+    .select('id, product')
+    .eq('user_id', supabase.auth.user()?.id)
+    .single();
+  if (custError || !customer) throw new Error('Customer not found');
+
+  // Fetch delivered rows for that date; only expose minimal fields
   const { data, error } = await supabase
     .from('daily_deliveries')
-    .update({ delivered, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('owner_id', user.id)
-    .select('id, delivered')
-    .single();
+    .select('id, delivery_date, shift, quantity, status')
+    .eq('customer_id', customer.id)
+    .eq('status', 'Delivered')
+    .eq('delivery_date', date)
+    .order('created_at', { ascending: false });
   if (error) throw error;
-  return data;
+
+  return (data || []).map((row) => ({
+    id: row.id,
+    date: row.delivery_date,
+    shift: row.shift,
+    quantity: Number(row.quantity),
+    product: customer.product || 'Milk',
+    status: row.status,
+  }));
 }
 
 export async function ensureDailyDelivery(payload) {

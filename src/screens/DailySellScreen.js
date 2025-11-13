@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenContainer from '../components/ScreenContainer';
+import { supabase } from '../lib/supabase';
+import { requireUser } from '../lib/session';
 import { useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { listDeliveryAgents } from '../lib/delivery';
@@ -78,6 +80,30 @@ export default function DailySellScreen() {
 
   useEffect(() => {
     loadSales();
+  }, [loadSales]);
+
+  // Realtime: refresh when any daily_deliveries row changes for this seller (owner)
+  useEffect(() => {
+    let sub;
+    (async () => {
+      try {
+        const user = await requireUser();
+        sub = supabase
+          .channel(`dd-owner-${user.id}`)
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'daily_deliveries',
+            filter: `owner_id=eq.${user.id}`,
+          }, () => {
+            loadSales();
+          })
+          .subscribe();
+      } catch {}
+    })();
+    return () => {
+      if (sub) supabase.removeChannel(sub);
+    };
   }, [loadSales]);
 
   const filtered = useMemo(() => sales, [sales]);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { HeaderBar } from '../components/HeaderBar';
 import { Colors } from '../theme/colors';
 import { DrawerActions, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -47,37 +47,40 @@ export const MyPickupScreen: React.FC = () => {
 
   const agentAssignments = React.useMemo(() => {
     const filtered = assignments.filter((a) => (deliveryAgent?.id ? a.deliveryAgentId === deliveryAgent.id : true));
-    const pickByCustomer = new Map<string, typeof assignments[number]>();
+    const group = new Map<string, typeof assignments[number][]>();
     for (const a of filtered) {
-      const cust = getCustomerById(a.customerId);
+      const arr = group.get(a.customerId) || [];
+      arr.push(a);
+      group.set(a.customerId, arr);
+    }
+    const result: typeof assignments[number][] = [];
+    for (const [customerId, arr] of group.entries()) {
+      const cust = getCustomerById(customerId);
       const preferred = cust?.preferredShift as ('morning' | 'evening' | undefined);
-      const existing = pickByCustomer.get(a.customerId);
-      if (!existing) {
-        pickByCustomer.set(a.customerId, a);
+      // 1) If any delivered, show the delivered one (reflect confirmation immediately)
+      const deliveredOne = arr.find((x) => x.delivered);
+      if (deliveredOne) {
+        result.push(deliveredOne);
         continue;
       }
-      // If seller set a preferred shift, keep the one matching it
+      // 2) Else pick preferred shift if available
       if (preferred) {
-        if (a.shift === preferred && existing.shift !== preferred) {
-          pickByCustomer.set(a.customerId, a);
-          continue;
-        }
-        if (existing.shift === preferred && a.shift !== preferred) {
+        const pref = arr.find((x) => x.shift === preferred);
+        if (pref) {
+          result.push(pref);
           continue;
         }
       }
-      // Otherwise prefer morning over evening
-      if (a.shift === 'morning' && existing.shift === 'evening') {
-        pickByCustomer.set(a.customerId, a);
-      }
+      // 3) Else prefer morning over evening
+      const morning = arr.find((x) => x.shift === 'morning');
+      result.push(morning || arr[0]);
     }
-    const arr = Array.from(pickByCustomer.values());
-    arr.sort((a, b) => {
+    result.sort((a, b) => {
       const customerA = getCustomerById(a.customerId);
       const customerB = getCustomerById(b.customerId);
       return (customerA?.name || '').localeCompare(customerB?.name || '');
     });
-    return arr;
+    return result;
   }, [assignments, deliveryAgent?.id, getCustomerById]);
   
   // Only display customer details.
@@ -140,37 +143,55 @@ export const MyPickupScreen: React.FC = () => {
                   {!!customer?.plan && <Text style={styles.assignmentMeta}>Plan: {customer.plan}</Text>}
                 </View>
                 <View style={styles.switchWrap}>
-                  <Text style={styles.switchLabel}>Delivered</Text>
-                  <Switch
-                    value={assignment.delivered}
-                    onValueChange={async (value) => {
-                      try {
-                        // Always provide a non-null, numeric liters value
-                        const qty = value
-                          ? (Number.isFinite(litersToUse) && litersToUse > 0 ? litersToUse : 0)
-                          : (Number.isFinite(assignment.liters) && (assignment.liters as number) > 0
-                              ? (assignment.liters as number)
-                              : (Number.isFinite(litersToUse) ? litersToUse : 0));
-                        // Optimistic update first so the UI switch stays in sync immediately
-                        toggleDelivered(assignment.id, assignment.shift || 'morning', value);
-                        await setDeliveryStatus(
-                          assignment.id,
-                          todayLocal,
-                          assignment.shift || 'morning',
-                          value,
-                          qty,
-                        );
-                        Alert.alert(
-                          value ? 'Marked Delivered' : 'Marked Pending',
-                          `${customer?.name || 'Customer'} • ${assignment.shift || 'morning'} • ${qty} L`
-                        );
-                        // Light refresh after confirmation to pick up any server-side changes
-                        await refresh();
-                      } catch (e: any) {
-                        Alert.alert('Update failed', e?.message || 'Could not update delivery status.');
-                      }
-                    }}
-                  />
+                  {assignment.delivered ? (
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
+                      onPress={async () => {
+                        try {
+                          const qty = Number.isFinite(assignment.liters) && (assignment.liters as number) > 0
+                            ? (assignment.liters as number)
+                            : (Number.isFinite(litersToUse) ? litersToUse : 0);
+                          toggleDelivered(assignment.id, assignment.shift || 'morning', false);
+                          await setDeliveryStatus(
+                            assignment.id,
+                            todayLocal,
+                            assignment.shift || 'morning',
+                            false,
+                            qty,
+                          );
+                          Alert.alert('Marked Pending', `${customer?.name || 'Customer'} • ${assignment.shift || 'morning'} • ${qty} L`);
+                          await refresh();
+                        } catch (e: any) {
+                          Alert.alert('Update failed', e?.message || 'Could not update delivery status.');
+                        }
+                      }}
+                    >
+                      <Text style={styles.actionBtnText}>Mark Pending</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: '#16a34a' }]}
+                      onPress={async () => {
+                        try {
+                          const qty = Number.isFinite(litersToUse) && litersToUse > 0 ? litersToUse : 0;
+                          toggleDelivered(assignment.id, assignment.shift || 'morning', true);
+                          await setDeliveryStatus(
+                            assignment.id,
+                            todayLocal,
+                            assignment.shift || 'morning',
+                            true,
+                            qty,
+                          );
+                          Alert.alert('Marked Delivered', `${customer?.name || 'Customer'} • ${assignment.shift || 'morning'} • ${qty} L`);
+                          await refresh();
+                        } catch (e: any) {
+                          Alert.alert('Update failed', e?.message || 'Could not update delivery status.');
+                        }
+                      }}
+                    >
+                      <Text style={styles.actionBtnText}>Confirm Delivered</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
             );

@@ -5,6 +5,7 @@ import { DayTabs, Day } from '../components/DayTabs';
 import { Colors } from '../theme/colors';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { useDelivery } from '../context/DeliveryContext';
+import { useAuth } from '../context/AuthContext';
 
 const buildDays = (): Day[] => {
   const now = new Date();
@@ -14,10 +15,13 @@ const buildDays = (): Day[] => {
     const d = new Date(now);
     d.setHours(0, 0, 0, 0);
     d.setDate(now.getDate() + i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
     arr.push({
       label: labels[d.getDay()],
       sub: d.getDate().toString().padStart(2, '0'),
-      value: d.toISOString().slice(0, 10),
+      value: `${y}-${m}-${day}`,
     });
   }
   return arr;
@@ -26,6 +30,7 @@ const buildDays = (): Day[] => {
 export const MyDeliveryScreen: React.FC = () => {
   const nav = useNavigation();
   const { deliveryAgents, assignments, getCustomerById } = useDelivery();
+  const { agent } = useAuth();
 
   const days = React.useMemo(() => buildDays(), []);
   const [selected, setSelected] = React.useState(3);
@@ -40,7 +45,8 @@ export const MyDeliveryScreen: React.FC = () => {
 
   const agentSummaries = React.useMemo(() => {
     if (!selectedDay) return [];
-    return deliveryAgents.map((agent) => {
+    const list = agent ? deliveryAgents.filter((a) => a.id === agent.id) : [];
+    return list.map((agent) => {
       const agentAssignments = assignments.filter((assignment) => assignment.deliveryAgentId === agent.id && assignment.date === selectedDay.value);
       const totals = agentAssignments.reduce(
         (acc, assignment) => {
@@ -59,7 +65,8 @@ export const MyDeliveryScreen: React.FC = () => {
         assigned: totals.assigned,
         delivered: totals.delivered,
         pending,
-        assignments: agentAssignments.map((assignment) => ({
+        // Only include delivered rows in the list
+        assignments: agentAssignments.filter((a) => a.delivered).map((assignment) => ({
           id: assignment.id,
           customer: getCustomerById(assignment.customerId),
           shift: assignment.shift,
@@ -68,7 +75,7 @@ export const MyDeliveryScreen: React.FC = () => {
         })),
       };
     });
-  }, [assignments, deliveryAgents, getCustomerById, selectedDay]);
+  }, [assignments, deliveryAgents, getCustomerById, selectedDay, agent?.id]);
 
   const hasAssignments = agentSummaries.some((summary) => summary.assignments.length > 0);
 
@@ -105,7 +112,7 @@ export const MyDeliveryScreen: React.FC = () => {
               </View>
 
               {summary.assignments.map((assignment) => (
-                <View key={assignment.id} style={styles.assignmentRow}>
+                <View key={`${assignment.id}-${assignment.shift}`} style={styles.assignmentRow}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.assignmentCustomer}>{assignment.customer?.name ?? 'Unknown Customer'}</Text>
                     <Text style={styles.assignmentMeta}>

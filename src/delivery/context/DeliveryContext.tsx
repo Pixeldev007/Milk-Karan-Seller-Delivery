@@ -1,4 +1,5 @@
 import React from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Assignment, Customer, DeliveryAgent, Product } from '../data/mock';
 import { supabase, SUPABASE_CONFIGURED } from '../lib/supabaseClient';
 import {
@@ -64,6 +65,9 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
   const [deliveryAgents, setDeliveryAgents] = React.useState<DeliveryAgent[]>([]);
   const [assignments, setAssignments] = React.useState<Assignment[]>([]);
   const [connected, setConnected] = React.useState<boolean>(SUPABASE_CONFIGURED && !!supabase);
+  // Local overrides to keep UI state stable across refreshes (per day)
+  const [overrideDate, setOverrideDate] = React.useState<string>('');
+  const [localDeliveryOverrides, setLocalDeliveryOverrides] = React.useState<Record<string, boolean>>({});
 
   // Initialize session context
   React.useEffect(() => {
@@ -100,6 +104,25 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
       const toD = new Date(now);
       toD.setDate(toD.getDate() + 7);
       const toISO = (d: Date) => new Date(d).toISOString().slice(0, 10);
+      const today = toISO(now);
+      // Reset overrides if day changed
+      if (overrideDate && overrideDate !== today) {
+        setLocalDeliveryOverrides({});
+        // Clear persisted overrides for previous day
+        if (agent?.id) {
+          const key = `deliveryOverrides:${agent.id}:${overrideDate}`;
+          await AsyncStorage.removeItem(key).catch(() => {});
+        }
+      }
+      // Load persisted overrides for today (do not setState; just use to apply below)
+      let persistedOverrides: Record<string, boolean> = {};
+      if (agent?.id) {
+        const key = `deliveryOverrides:${agent.id}:${today}`;
+        try {
+          const raw = await AsyncStorage.getItem(key);
+          if (raw) persistedOverrides = JSON.parse(raw);
+        } catch {}
+      }
       const [cs, ags, asg] = await Promise.all([
         fetchCustomers(agent?.id),
         fetchDeliveryAgents(agent?.id),
@@ -107,14 +130,23 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
       ]);
       setCustomers(cs);
       setDeliveryAgents(ags);
-      setAssignments(asg);
+      // Apply local or persisted overrides so manual toggle persists until explicitly changed
+      const applied = asg.map((a) => {
+        const key = `${a.id}|${a.shift}`;
+        const local = key in localDeliveryOverrides ? localDeliveryOverrides[key] : undefined;
+        const stored = key in persistedOverrides ? persistedOverrides[key] : undefined;
+        const val = typeof local === 'boolean' ? local : stored;
+        return typeof val === 'boolean' ? { ...a, delivered: !!val } : a;
+      });
+      setAssignments(applied);
+      setOverrideDate(today);
       setConnected(true);
     } catch (_e) {
       setConnected(false);
     } finally {
       setLoading(false);
     }
-  }, [agent?.id]);
+  }, [agent?.id, localDeliveryOverrides, overrideDate]);
 
   React.useEffect(() => {
     refresh();
@@ -143,6 +175,26 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
   const toggleDelivered = React.useCallback(async (assignmentId: string, shift: Shift, delivered?: boolean) => {
     const current = assignments.find((a) => a.id === assignmentId && a.shift === shift);
     const nextVal = delivered ?? !current?.delivered;
+    // Optimistic UI update + store local override for today
+    setAssignments((prev) => prev.map((a) => (a.id === assignmentId && a.shift === shift ? { ...a, delivered: !!nextVal } : a)));
+    setLocalDeliveryOverrides((prev) => {
+      const updated = { ...prev, [`${assignmentId}|${shift}`]: !!nextVal };
+      // Persist immediately for current agent + day to survive logout/login
+      const persist = async () => {
+        try {
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          const date = new Date(today).toISOString().slice(0,10);
+          if (agent?.id) {
+            const key = `deliveryOverrides:${agent.id}:${date}`;
+            await AsyncStorage.setItem(key, JSON.stringify(updated));
+          }
+        } catch {}
+      };
+      persist();
+      return updated;
+    });
+
     if (
       SUPABASE_CONFIGURED &&
       supabase &&
@@ -152,10 +204,7 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
     ) {
       await setDeliveryStatus(assignmentId, current.date, current.shift, !!nextVal, (current!.liters as number));
     }
-    setAssignments((prev) =>
-      prev.map((a) => (a.id === assignmentId && a.shift === shift ? { ...a, delivered: !!nextVal } : a)),
-    );
-  }, [assignments]);
+  }, [assignments, agent?.id]);
 
   const updateAssignmentLiters = React.useCallback(async (assignmentId: string, liters: number) => {
     if (SUPABASE_CONFIGURED && supabase) {

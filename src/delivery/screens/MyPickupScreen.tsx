@@ -9,29 +9,15 @@ import { useAuth } from '../context/AuthContext';
 
 // No date/shift UI; only show assigned customers.
 
+// Simple tap button for toggling delivery status (no swipe, no refresh)
+
 export const MyPickupScreen: React.FC = () => {
   const nav = useNavigation();
   const { assignments, loading, refresh, getCustomerById, configured, connected, toggleDelivered } = useDelivery();
   const { agent: deliveryAgent } = useAuth();
+  const [pullRefreshing, setPullRefreshing] = React.useState(false);
 
-  if (!deliveryAgent) {
-    return (
-      <View style={{ flex: 1, backgroundColor: Colors.background }}>
-        <HeaderBar title="My Pickup" onPressMenu={() => nav.dispatch(DrawerActions.openDrawer())} />
-      {!configured || !connected ? (
-        <View style={{ backgroundColor: '#fff3cd', borderColor: '#ffeeba', borderWidth: 1, padding: 10 }}>
-          <Text style={{ color: '#856404', fontWeight: '600' }}>
-            Backend not connected. Check Supabase URL/Key and pull to refresh.
-          </Text>
-        </View>
-      ) : null}
-        <View style={{ padding: 16 }}>
-          <Text style={{ color: Colors.text, fontWeight: '700', marginBottom: 6 }}>No delivery profile</Text>
-          <Text style={{ color: Colors.muted }}>Login as a delivery boy to view your assigned pickups.</Text>
-        </View>
-      </View>
-    );
-  }
+  const hasAgent = !!deliveryAgent;
 
   // No local state for date/shift/actions
 
@@ -98,15 +84,30 @@ export const MyPickupScreen: React.FC = () => {
       <View style={{ height: 8 }} />
       <ScrollView
         contentContainerStyle={{ padding: 12 }}
-        refreshControl={<RefreshControl refreshing={!!loading} onRefresh={refresh} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={pullRefreshing}
+            onRefresh={async () => {
+              setPullRefreshing(true);
+              try { await refresh(); } finally { setPullRefreshing(false); }
+            }}
+          />
+        }
       >
-        {loading && (
+        {false && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>Loading assignments...</Text>
             <Text style={styles.emptySub}>Fetching from server</Text>
           </View>
         )}
 
+        {!hasAgent ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No delivery profile</Text>
+            <Text style={styles.emptySub}>Login as a delivery boy to view your assigned pickups.</Text>
+          </View>
+        ) : (
+        <>
         <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Customers</Text>
         {agentAssignments.length === 0 ? (
           <View style={styles.emptyState}>
@@ -143,59 +144,50 @@ export const MyPickupScreen: React.FC = () => {
                   {!!customer?.plan && <Text style={styles.assignmentMeta}>Plan: {customer.plan}</Text>}
                 </View>
                 <View style={styles.switchWrap}>
-                  {assignment.delivered ? (
-                    <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
-                      onPress={async () => {
-                        try {
-                          const qty = Number.isFinite(assignment.liters) && (assignment.liters as number) > 0
-                            ? (assignment.liters as number)
-                            : (Number.isFinite(litersToUse) ? litersToUse : 0);
-                          toggleDelivered(assignment.id, assignment.shift || 'morning', false);
-                          await setDeliveryStatus(
-                            assignment.id,
-                            todayLocal,
-                            assignment.shift || 'morning',
-                            false,
-                            qty,
-                          );
-                          Alert.alert('Marked Pending', `${customer?.name || 'Customer'} • ${assignment.shift || 'morning'} • ${qty} L`);
-                          await refresh();
-                        } catch (e: any) {
-                          Alert.alert('Update failed', e?.message || 'Could not update delivery status.');
-                        }
-                      }}
-                    >
-                      <Text style={styles.actionBtnText}>Mark Pending</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: '#16a34a' }]}
-                      onPress={async () => {
-                        try {
-                          const qty = Number.isFinite(litersToUse) && litersToUse > 0 ? litersToUse : 0;
-                          toggleDelivered(assignment.id, assignment.shift || 'morning', true);
-                          await setDeliveryStatus(
-                            assignment.id,
-                            todayLocal,
-                            assignment.shift || 'morning',
-                            true,
-                            qty,
-                          );
-                          Alert.alert('Marked Delivered', `${customer?.name || 'Customer'} • ${assignment.shift || 'morning'} • ${qty} L`);
-                          await refresh();
-                        } catch (e: any) {
-                          Alert.alert('Update failed', e?.message || 'Could not update delivery status.');
-                        }
-                      }}
-                    >
-                      <Text style={styles.actionBtnText}>Confirm Delivered</Text>
-                    </TouchableOpacity>
-                  )}
+                  <Text style={styles.switchLabel}>{assignment.delivered ? 'Delivered' : 'Deliver Pending'}</Text>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[
+                      styles.toggleBtn,
+                      assignment.delivered ? styles.toggleBtnOn : styles.toggleBtnOff,
+                    ]}
+                    onPress={async () => {
+                      try {
+                        const next = !assignment.delivered;
+                        const qtyOn = Number.isFinite(litersToUse) && litersToUse > 0 ? litersToUse : 0;
+                        const qtyOff = Number.isFinite(assignment.liters) && (assignment.liters as number) > 0
+                          ? (assignment.liters as number)
+                          : (Number.isFinite(litersToUse) ? litersToUse : 0);
+                        toggleDelivered(assignment.id, assignment.shift || 'morning', next);
+                        await setDeliveryStatus(
+                          assignment.id,
+                          todayLocal,
+                          assignment.shift || 'morning',
+                          next,
+                          next ? qtyOn : qtyOff,
+                        );
+                        Alert.alert(
+                          next ? 'Marked Delivered' : 'Marked Pending',
+                          `${customer?.name || 'Customer'} • ${assignment.shift || 'morning'} • ${(next ? qtyOn : qtyOff)} L`
+                        );
+                      } catch (e: any) {
+                        Alert.alert('Update failed', e?.message || 'Could not update delivery status.');
+                      }
+                    }}
+                  >
+                    <View style={styles.toggleTrack}>
+                      <View style={[styles.toggleThumb, assignment.delivered ? styles.toggleThumbOn : styles.toggleThumbOff]} />
+                      <Text style={[styles.toggleText, assignment.delivered ? styles.toggleTextOn : styles.toggleTextOff]}>
+                        {assignment.delivered ? 'Delivered' : 'Pending'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
               </View>
             );
           })
+        )}
+        </>
         )}
       </ScrollView>
     </View>
@@ -347,4 +339,15 @@ const styles = StyleSheet.create({
   },
   modalTitle: { color: Colors.text, fontWeight: '700', fontSize: 16, marginBottom: 8 },
   modalLabel: { color: Colors.muted, fontWeight: '600', marginTop: 8, marginBottom: 4 },
+  // Simple toggle button styles
+  toggleBtn: { paddingVertical: 4, paddingHorizontal: 4, borderRadius: 20 },
+  toggleBtnOn: { backgroundColor: '#dcfce7', borderWidth: 1, borderColor: '#86efac' },
+  toggleBtnOff: { backgroundColor: '#f3f4f6', borderWidth: 1, borderColor: Colors.border },
+  toggleTrack: { width: 140, height: 36, borderRadius: 18, justifyContent: 'center' },
+  toggleThumb: { position: 'absolute', left: 2, width: 32, height: 32, borderRadius: 16, backgroundColor: '#ffffff' },
+  toggleThumbOn: { left: 106, backgroundColor: '#ffffff' },
+  toggleThumbOff: { left: 2 },
+  toggleText: { width: '100%', textAlign: 'center', fontWeight: '700', fontSize: 12 },
+  toggleTextOn: { color: '#15803d' },
+  toggleTextOff: { color: Colors.muted },
 });

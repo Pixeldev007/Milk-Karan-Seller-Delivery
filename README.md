@@ -33,7 +33,7 @@ npm start
 ## Project Structure
 
 ```
-milk-wala/
+milk-karan/
 ├── App.js                          # Main app entry point
 ├── src/
 │   ├── screens/
@@ -89,4 +89,4 @@ MIT License
 ## Support
 
 For custom app development, contact Ruhiverse Technologies.
-# Milk-Wala
+# Milk-Karan

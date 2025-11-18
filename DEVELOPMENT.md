@@ -5,7 +5,7 @@
 ### Folder Structure
 
 ```
-milk-wala/
+milk-karan/
 ├── App.js                          # Root component
 ├── src/
 │   ├── screens/                    # Screen components

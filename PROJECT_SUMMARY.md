@@ -77,7 +77,7 @@ I've created a complete **Milk Karan** dairy management application using React 
 ## 📁 Project Structure
 
 ```
-milk-wala/
+milk-karan/
 ├── App.js                          # Main app entry
 ├── package.json                    # Dependencies
 ├── app.json                        # Expo configuration

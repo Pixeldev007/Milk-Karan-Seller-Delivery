@@ -78,7 +78,7 @@ Press one of these keys:
 ## 📁 Project Files
 
 ```
-milk-wala/
+milk-karan/
 ├── 📄 START_HERE.md          ← You are here!
 ├── 📄 README.md              ← Full documentation
 ├── 📄 QUICKSTART.md          ← Quick setup guide

@@ -229,7 +229,7 @@ export default function MyCustomerScreen() {
       {/* List */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#66BB6A" />
+          <ActivityIndicator size="large" color="#01559d" />
           <Text style={styles.loadingText}>Loading customers...</Text>
         </View>
       ) : (
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f7f7f7',
   },
   header: {
-    backgroundColor: '#90EE90',
+    backgroundColor: '#01559d',
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -384,13 +384,14 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    minWidth: 0, // allow flex to shrink on web so text stays inside the box
     fontSize: 14,
     color: '#333',
   },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 10,
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
   plan: {
     marginTop: 6,
     fontSize: 13,
-    color: '#2e7d32',
+    color: '#01559d',
     fontWeight: '700',
   },
   actions: {
@@ -527,15 +528,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   toggleBtnActive: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#66BB6A',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#01559d',
   },
   toggleText: {
     color: '#555',
     fontWeight: '600',
   },
   toggleTextActive: {
-    color: '#2e7d32',
+    color: '#01559d',
   },
   modalBtn: {
     paddingHorizontal: 14,
@@ -546,7 +547,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f1f1',
   },
   saveBtn: {
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
   },
   modalBtnText: {
     fontWeight: '700',

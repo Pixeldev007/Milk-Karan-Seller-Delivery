@@ -144,7 +144,7 @@ export default function DailySellScreen() {
           <Ionicons
             name={item.status === 'Delivered' ? 'checkmark-circle' : 'time-outline'}
             size={16}
-            color={item.status === 'Delivered' ? '#1B5E20' : '#B26A00'}
+            color={item.status === 'Delivered' ? '#01559d' : '#B26A00'}
           />
           <Text style={[styles.statusText, item.status === 'Delivered' ? styles.okText : styles.pendingText]}>
             {item.status}
@@ -169,17 +169,19 @@ export default function DailySellScreen() {
       <View style={styles.filters}>
         <View style={styles.dateBox}>
           <TouchableOpacity style={styles.dateBtn} onPress={() => shiftDate(-1)}>
-            <Ionicons name="chevron-back" size={18} color="#2e7d32" />
+            <Ionicons name="chevron-back" size={18} color="#01559d" />
           </TouchableOpacity>
           <Text style={styles.dateText}>{todayKey}</Text>
           <TouchableOpacity style={styles.dateBtn} onPress={() => shiftDate(1)}>
-            <Ionicons name="chevron-forward" size={18} color="#2e7d32" />
+            <Ionicons name="chevron-forward" size={18} color="#01559d" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.dboyBox}>
-          <Ionicons name="person" size={16} color="#777" />
-          <Text style={styles.dboyLabel}>Delivery Boy:</Text>
+          <View style={styles.dboyHeaderRow}>
+            <Ionicons name="person" size={16} color="#777" />
+            <Text style={styles.dboyLabel}>Delivery Boys:</Text>
+          </View>
           <View style={styles.dboyPicker}>
             {agents.map((db) => (
               <TouchableOpacity
@@ -199,7 +201,7 @@ export default function DailySellScreen() {
       {/* List */}
       {loadingSales ? (
         <View style={{ paddingVertical: 24, alignItems: 'center' }}>
-          <ActivityIndicator size="small" color="#66BB6A" />
+          <ActivityIndicator size="small" color="#01559d" />
         </View>
       ) : (
         <FlatList
@@ -226,7 +228,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f7f7f7',
   },
   header: {
-    backgroundColor: '#90EE90',
+    backgroundColor: '#01559d',
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -261,7 +263,7 @@ const styles = StyleSheet.create({
   dateBtn: {
     padding: 6,
     borderRadius: 8,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#FFFFFF',
   },
   dateText: {
     fontWeight: '700',
@@ -273,6 +275,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e5e5',
     padding: 10,
+  },
+  dboyHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   dboyLabel: {
     marginLeft: 6,
@@ -294,15 +300,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   dboyChipActive: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#66BB6A',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#01559d',
   },
   dboyChipText: {
     color: '#555',
     fontWeight: '600',
   },
   dboyChipTextActive: {
-    color: '#2e7d32',
+    color: '#01559d',
   },
   row: {
     backgroundColor: '#fff',
@@ -340,8 +346,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   okPill: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#66BB6A',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#01559d',
   },
   pendingPill: {
     backgroundColor: '#FFF8E1',
@@ -352,13 +358,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   okText: {
-    color: '#1B5E20',
+    color: '#01559d',
   },
   pendingText: {
     color: '#B26A00',
   },
   toggleBtn: {
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 8,

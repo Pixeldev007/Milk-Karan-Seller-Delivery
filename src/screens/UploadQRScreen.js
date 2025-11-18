@@ -30,6 +30,6 @@ const styles = StyleSheet.create({
   body: { padding: 16, alignItems: 'center', alignSelf: 'center', width: '100%', maxWidth: 900 },
   text: { color: '#666' },
   uploadBox: { width: 200, height: 200, borderRadius: 12, backgroundColor: '#fafafa', borderWidth: 1, borderColor: '#eee', alignItems: 'center', justifyContent: 'center' },
-  saveBtn: { backgroundColor: '#66BB6A', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18, alignSelf: 'stretch' },
+  saveBtn: { backgroundColor: '#01559d', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18, alignSelf: 'stretch' },
   saveText: { color: '#fff', fontWeight: '700', textAlign: 'center' },
 });

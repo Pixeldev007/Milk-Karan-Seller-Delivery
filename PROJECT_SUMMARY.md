@@ -1,8 +1,8 @@
-# Milk Wala App - Project Summary
+# Milk Karan App - Project Summary
 
 ## 🎉 Project Created Successfully!
 
-I've created a complete **Milk Wala** dairy management application using React Native with Expo, featuring a beautiful light green theme and responsive design for both desktop and mobile.
+I've created a complete **Milk Karan** dairy management application using React Native with Expo, featuring a beautiful light green theme and responsive design for both desktop and mobile.
 
 ## 📱 What's Included
 
@@ -103,7 +103,7 @@ milk-wala/
 
 1. **Install dependencies:**
    ```bash
-   cd "/home/pixel/Downloads/Milk wala"
+   cd "/home/pixel/Downloads/Milk Karan"
    npm install
    ```
 
@@ -164,4 +164,4 @@ Powered by: Ruhiverse Technologies
 
 ---
 
-**Enjoy your new Milk Wala app!** 🥛✨
+**Enjoy your new Milk Karan app!** 🥛✨

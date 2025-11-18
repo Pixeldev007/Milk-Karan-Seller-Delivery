@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 export default function CustomAppScreen() {
   return (
     <View style={styles.container}>
-      <Ionicons name="phone-portrait-outline" size={56} color="#66BB6A" />
+      <Ionicons name="phone-portrait-outline" size={56} color="#01559d" />
       <Text style={styles.title}>Get Your Custom App</Text>
       <Text style={styles.subtitle}>
         Need features tailored for your dairy business? Let's build a custom app for you.
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 10,

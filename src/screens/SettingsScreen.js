@@ -44,7 +44,7 @@ export default function SettingsScreen({ navigation }) {
         {items.map((it) => (
           <TouchableOpacity key={it.id} style={[styles.optionRow, it.danger && { borderColor: '#ffdddd' }]} onPress={() => onPressItem(it)}>
             <View style={styles.optionLeft}>
-              <Ionicons name={it.icon} size={20} color={it.danger ? '#D32F2F' : '#66BB6A'} />
+              <Ionicons name={it.icon} size={20} color={it.danger ? '#D32F2F' : '#01559d'} />
               <Text style={[styles.optionLabel, it.danger && { color: '#D32F2F' }]}>{it.label}</Text>
             </View>
           </TouchableOpacity>

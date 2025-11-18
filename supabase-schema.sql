@@ -1,5 +1,5 @@
 -- ============================================
--- Milk Wala - Database Schema for Authenticated Users
+-- Milk Karan - Database Schema for Authenticated Users
 -- ============================================
 -- Run this SQL in your Supabase SQL Editor
 -- This creates tables for user profiles and business profiles

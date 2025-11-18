@@ -1,4 +1,4 @@
-# Development Guide - Milk Wala App
+# Development Guide - Milk Karan App
 
 ## 🏗️ Project Architecture
 

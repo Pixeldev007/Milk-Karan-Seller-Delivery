@@ -20,7 +20,7 @@ export default function UploadLogoScreen({ navigation }) {
         </TouchableOpacity>
         <View style={styles.rowBtns}>
           <TouchableOpacity style={[styles.smallBtn, { backgroundColor: '#f1f1f1' }]} onPress={remove}><Text>Remove</Text></TouchableOpacity>
-          <TouchableOpacity style={[styles.smallBtn, { backgroundColor: '#E8F5E9', borderColor: '#66BB6A', borderWidth: 1 }]} onPress={pick}><Text style={{ color:'#2e7d32', fontWeight:'700' }}>Replace</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.smallBtn, { backgroundColor: '#FFFFFF', borderColor: '#01559d', borderWidth: 1 }]} onPress={pick}><Text style={{ color:'#2e7d32', fontWeight:'700' }}>Replace</Text></TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.saveBtn} onPress={save}><Text style={styles.saveText}>Save Logo</Text></TouchableOpacity>
       </View>
@@ -37,6 +37,6 @@ const styles = StyleSheet.create({
   circle: { width: 160, height: 160, borderRadius: 80, backgroundColor: '#fafafa', borderWidth: 1, borderColor: '#eee', alignItems: 'center', justifyContent: 'center' },
   rowBtns: { flexDirection: 'row', gap: 10, marginTop: 12 },
   smallBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
-  saveBtn: { backgroundColor: '#66BB6A', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18, alignSelf: 'stretch' },
+  saveBtn: { backgroundColor: '#01559d', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18, alignSelf: 'stretch' },
   saveText: { color: '#fff', fontWeight: '700' },
 });

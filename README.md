@@ -1,4 +1,4 @@
-# Milk Wala - Dairy Management App
+# Milk Karan - Dairy Management App
 
 A beautiful and responsive dairy management application built with React Native and Expo. Works on both desktop web and mobile devices.
 

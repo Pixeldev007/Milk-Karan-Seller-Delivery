@@ -110,7 +110,7 @@ export default function PaymentSettingScreen() {
       <View style={styles.body}>
         {loading ? (
           <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-            <ActivityIndicator size="small" color="#66BB6A" />
+            <ActivityIndicator size="small" color="#01559d" />
           </View>
         ) : (
           <FlatList
@@ -201,14 +201,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f7f7f7' },
   header: { backgroundColor: '#90EE90', paddingTop: Platform.OS === 'ios' ? 50 : 40, paddingBottom: 16, paddingHorizontal: 16, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  createBtn: { backgroundColor: '#66BB6A', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
+  createBtn: { backgroundColor: '#01559d', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
   createBtnText: { color: '#fff', fontWeight: '700' },
   body: { padding: 16, alignSelf: 'center', width: '100%', maxWidth: 900 },
   label: { fontSize: 13, color: '#666', marginTop: 12, marginBottom: 6, fontWeight: '600' },
   input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12 },
   chipsRow: { flexDirection: 'row', gap: 8, marginBottom: 4 },
   chip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1, borderColor: '#ddd', backgroundColor: '#fff' },
-  chipActive: { backgroundColor: '#E8F5E9', borderColor: '#66BB6A' },
+  chipActive: { backgroundColor: '#FFFFFF', borderColor: '#01559d' },
   chipText: { color: '#555', fontWeight: '600' },
   chipTextActive: { color: '#2e7d32' },
   cardRow: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center' },
@@ -225,6 +225,6 @@ const styles = StyleSheet.create({
   selectList: { marginTop: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, overflow: 'hidden' },
   selectItem: { paddingVertical: 10, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
   selectItemText: { color: '#333' },
-  saveBtn: { backgroundColor: '#66BB6A', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18 },
+  saveBtn: { backgroundColor: '#01559d', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18 },
   saveText: { color: '#fff', fontWeight: '700' },
 });

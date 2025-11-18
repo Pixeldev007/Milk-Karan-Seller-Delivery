@@ -108,7 +108,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1B5E20',
+    color: '#01559d',
     marginBottom: 8,
   },
   subtitle: {
@@ -141,20 +141,20 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 15,
-    color: '#2E7D32',
+    color: '#01559d',
     marginBottom: 6,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#C8E6C9',
+    borderColor: '#01559d',
     borderRadius: 10,
     paddingHorizontal: 14,
     fontSize: 16,
     backgroundColor: '#FAFAFA',
   },
   primaryButton: {
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
     borderRadius: 10,
     paddingVertical: 16,
     alignItems: 'center',
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: '#1B5E20',
+    backgroundColor: '#01559d',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 15,
-    color: '#1B5E20',
+    color: '#01559d',
     fontWeight: '600',
     marginLeft: 6,
   },

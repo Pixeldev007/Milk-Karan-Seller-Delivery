@@ -7,7 +7,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <Text style={styles.text}>Milk Wala App</Text>
+      <Text style={styles.text}>Milk Karan App</Text>
       <Text style={styles.subtext}>App is running successfully!</Text>
     </View>
   );

@@ -9,14 +9,14 @@ import CalendarStrip from '../components/CalendarStrip';
 export default function DashboardScreen({ navigation }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const menuItems = [
-    { id: 1, title: 'My Customer', icon: 'people', color: '#66BB6A' },
-    { id: 2, title: 'Delivery Boy', icon: 'car', color: '#66BB6A' },
-    { id: 3, title: 'Daily Sell', icon: 'water', color: '#66BB6A' },
-    { id: 5, title: 'Create Bill', icon: 'receipt', color: '#66BB6A' },
-    { id: 6, title: 'Report', icon: 'document-text', color: '#66BB6A' },
-    { id: 7, title: 'Products', icon: 'cube', color: '#66BB6A' },
-    { id: 8, title: 'Message', icon: 'send', color: '#66BB6A' },
-    { id: 9, title: 'Received Payment', icon: 'cash', color: '#66BB6A' },
+    { id: 1, title: 'My Customer', icon: 'people', color: '#01559d' },
+    { id: 2, title: 'Delivery Boy', icon: 'car', color: '#01559d' },
+    { id: 3, title: 'Daily Sell', icon: 'water', color: '#01559d' },
+    { id: 5, title: 'Create Bill', icon: 'receipt', color: '#01559d' },
+    { id: 6, title: 'Report', icon: 'document-text', color: '#01559d' },
+    { id: 7, title: 'Products', icon: 'cube', color: '#01559d' },
+    { id: 8, title: 'Message', icon: 'send', color: '#01559d' },
+    { id: 9, title: 'Received Payment', icon: 'cash', color: '#01559d' },
   ];
 
   const ListHeader = (
@@ -24,21 +24,21 @@ export default function DashboardScreen({ navigation }) {
       <CalendarStrip selectedDate={selectedDate} onDateSelect={setSelectedDate} />
       <View style={styles.statsContainer}>
         <View style={styles.statCardCompact}>
-          <Text style={[styles.statNumberCompact, { color: '#66BB6A' }]}>0</Text>
-          <View style={[styles.statIconCircle, { backgroundColor: 'rgba(102,187,106,0.15)' }]}>
-            <Ionicons name="checkmark" size={20} color="#66BB6A" />
+          <Text style={[styles.statNumberCompact, { color: '#01559d' }]}>0</Text>
+          <View style={[styles.statIconCircle, { backgroundColor: 'rgba(1,85,157,0.15)' }]}>
+            <Ionicons name="checkmark" size={20} color="#01559d" />
           </View>
         </View>
         <View style={styles.statCardCompact}>
-          <Text style={[styles.statNumberCompact, { color: '#66BB6A' }]}>0</Text>
-          <View style={[styles.statIconCircle, { backgroundColor: 'rgba(102,187,106,0.15)' }]}>
-            <Ionicons name="close" size={20} color="#66BB6A" />
+          <Text style={[styles.statNumberCompact, { color: '#01559d' }]}>0</Text>
+          <View style={[styles.statIconCircle, { backgroundColor: 'rgba(1,85,157,0.15)' }]}>
+            <Ionicons name="close" size={20} color="#01559d" />
           </View>
         </View>
         <View style={[styles.statCardCompact, styles.statCardEmphasis]}>
-          <Text style={[styles.statNumberCompact, styles.statNumberEmphasis, { color: '#66BB6A' }]}>0.00 L</Text>
-          <View style={[styles.statIconCircle, styles.statIconCircleLarge, { backgroundColor: 'rgba(102,187,106,0.15)' }]}>
-            <Ionicons name="water" size={22} color="#66BB6A" />
+          <Text style={[styles.statNumberCompact, styles.statNumberEmphasis, { color: '#01559d' }]}>0.00 L</Text>
+          <View style={[styles.statIconCircle, styles.statIconCircleLarge, { backgroundColor: 'rgba(1,85,157,0.15)' }]}>
+            <Ionicons name="water" size={22} color="#01559d" />
           </View>
         </View>
       </View>
@@ -101,7 +101,7 @@ export default function DashboardScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#C8E6C9',
+    borderColor: '#01559d',
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   statNumberCompact: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1B5E20',
+    color: '#01559d',
   },
   statNumberEmphasis: {
     fontSize: 20,
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   statCardEmphasis: {
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#66BB6A',
+    borderColor: '#01559d',
   },
   menuGrid: {
     flexDirection: 'row',

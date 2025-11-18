@@ -1,4 +1,4 @@
-# Complete Setup Guide - Milk Wala App
+# Complete Setup Guide - Milk Karan App
 
 ## 📋 Prerequisites
 
@@ -19,7 +19,7 @@ Before you begin, ensure you have the following installed:
 ### Step 1: Navigate to Project Directory
 
 ```bash
-cd "/home/pixel/Downloads/Milk wala"
+cd "/home/pixel/Downloads/Milk Karan"
 ```
 
 ### Step 2: Install Dependencies

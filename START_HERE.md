@@ -1,8 +1,8 @@
-# 🥛 Welcome to Milk Wala App!
+# 🥛 Welcome to Milk Karan App!
 
 ## 🎉 Your App is Ready!
 
-I've created a complete **Milk Wala** dairy management application with a beautiful light green theme, responsive design, and all the UI elements from your screenshots.
+I've created a complete **Milk Karan** dairy management application with a beautiful light green theme, responsive design, and all the UI elements from your screenshots.
 
 ## 🚀 Quick Start (3 Steps)
 
@@ -218,7 +218,7 @@ The app uses a beautiful light green palette:
 
 ## 🎊 You're All Set!
 
-Your Milk Wala app is ready to run. Just execute:
+Your Milk Karan app is ready to run. Just execute:
 
 ```bash
 npm install && npm start

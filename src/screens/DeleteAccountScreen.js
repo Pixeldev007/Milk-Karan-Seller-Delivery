@@ -35,6 +35,6 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12 },
   deleteBtn: { backgroundColor: '#D32F2F', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18 },
   deleteText: { color: '#fff', fontWeight: '700' },
-  secondaryBtn: { backgroundColor: '#E8F5E9', borderWidth: 1, borderColor: '#66BB6A', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 10 },
+  secondaryBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#01559d', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 10 },
   secondaryText: { color: '#2e7d32', fontWeight: '700' },
 });

@@ -28,6 +28,6 @@ const styles = StyleSheet.create({
   body: { padding: 16, paddingBottom: 40, alignSelf: 'center', width: '100%', maxWidth: 900 },
   text: { color: '#666' },
   paragraph: { color: '#444', lineHeight: 20, marginBottom: 12 },
-  backBtn: { backgroundColor: '#E8F5E9', borderWidth: 1, borderColor: '#66BB6A', paddingVertical: 12, borderRadius: 10, alignItems:'center', marginTop: 10 },
+  backBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#01559d', paddingVertical: 12, borderRadius: 10, alignItems:'center', marginTop: 10 },
   backText: { color: '#2e7d32', fontWeight: '700' },
 });

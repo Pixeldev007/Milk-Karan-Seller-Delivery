@@ -3,11 +3,34 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 
 export default function CalendarStrip({ selectedDate, onDateSelect }) {
-  // Build all dates for the current month of selectedDate
+  // Build a 7-day window around the selected date (today by default)
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const monthDates = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
+
+  const selectedDay = selectedDate.getDate();
+  const windowSize = 7;
+  const halfWindow = Math.floor(windowSize / 2); // 3 days on each side when possible
+
+  let startDay = selectedDay - halfWindow;
+  let endDay = selectedDay + halfWindow;
+
+  // Clamp to month bounds
+  if (startDay < 1) {
+    const diff = 1 - startDay;
+    startDay = 1;
+    endDay = Math.min(daysInMonth, endDay + diff);
+  }
+  if (endDay > daysInMonth) {
+    const diff = endDay - daysInMonth;
+    endDay = daysInMonth;
+    startDay = Math.max(1, startDay - diff);
+  }
+
+  const monthDates = [];
+  for (let d = startDay; d <= endDay; d += 1) {
+    monthDates.push(new Date(year, month, d));
+  }
 
   const formatDate = (date) => {
     const options = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -47,7 +70,7 @@ export default function CalendarStrip({ selectedDate, onDateSelect }) {
       </View>
       <View style={styles.dateDisplay}>
         <Text style={styles.dateDisplayText}>{formatDate(selectedDate)}</Text>
-        <Ionicons name="chevron-down" size={20} color="#66BB6A" />
+        <Ionicons name="chevron-down" size={20} color="#01559d" />
       </View>
     </View>
   );
@@ -82,7 +105,7 @@ const styles = StyleSheet.create({
     minWidth: 50,
   },
   selectedDayCard: {
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
   },
   dayText: {
     fontSize: 12,
@@ -95,7 +118,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 18,
-    color: '#1B5E20',
+    color: '#01559d',
     fontWeight: 'bold',
   },
   selectedDateText: {
@@ -107,12 +130,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#C8E6C9',
+    borderTopColor: '#01559d',
   },
   dateDisplayText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#01559d',
     marginRight: 8,
   },
 });

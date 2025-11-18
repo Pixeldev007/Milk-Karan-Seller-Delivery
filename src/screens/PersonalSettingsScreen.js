@@ -44,9 +44,9 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, backgroundColor:'#fff', borderWidth:1, borderColor:'#eee', borderRadius:10, paddingHorizontal:12, paddingVertical:10 },
   chipsRow: { flexDirection: 'row', gap: 8, marginTop: 6 },
   chip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1, borderColor: '#ddd', backgroundColor: '#fff' },
-  chipActive: { backgroundColor: '#E8F5E9', borderColor: '#66BB6A' },
+  chipActive: { backgroundColor: '#FFFFFF', borderColor: '#01559d' },
   chipText: { color: '#555', fontWeight: '600' },
   chipTextActive: { color: '#2e7d32' },
-  saveBtn: { backgroundColor: '#66BB6A', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18 },
+  saveBtn: { backgroundColor: '#01559d', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18 },
   saveText: { color: '#fff', fontWeight: '700' },
 });

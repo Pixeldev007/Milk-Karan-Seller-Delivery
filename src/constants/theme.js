@@ -1,4 +1,4 @@
-// Theme configuration for Milk Wala App
+// Theme configuration for Milk Karan App
 import { Dimensions } from 'react-native';
 import COLORS from './colors';
 

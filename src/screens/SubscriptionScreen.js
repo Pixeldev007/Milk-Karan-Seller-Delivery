@@ -14,7 +14,7 @@ export default function SubscriptionScreen({ navigation }) {
   const Card = ({ title, price, limit, features, icon, buttonText, onPress, onSupport }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Ionicons name={icon} size={26} color="#66BB6A" />
+        <Ionicons name={icon} size={26} color="#01559d" />
         <Text style={styles.cardTitle}>{title}</Text>
       </View>
       {price ? (
@@ -27,7 +27,7 @@ export default function SubscriptionScreen({ navigation }) {
         <View style={styles.features}>
           {features.map((f, idx) => (
             <View key={idx} style={styles.featureRow}>
-              <Ionicons name="checkmark-circle" size={18} color="#66BB6A" />
+              <Ionicons name="checkmark-circle" size={18} color="#01559d" />
               <Text style={styles.featureText}>{f}</Text>
             </View>
           ))}
@@ -39,7 +39,7 @@ export default function SubscriptionScreen({ navigation }) {
             <Text style={styles.ctaText}>{buttonText}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.cta, styles.ctaSecondary]} onPress={onSupport}>
-            <Text style={[styles.ctaText, { color: '#2e7d32' }]}>Contact Support</Text>
+            <Text style={[styles.ctaText, { color: '#fff' }]}>Contact Support</Text>
           </TouchableOpacity>
         </>
       ) : null}
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     color: '#444',
   },
   cta: {
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',

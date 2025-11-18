@@ -1,6 +1,6 @@
 # Login & Register Pages Schema
 
-Complete schema and structure documentation for the authentication pages in Milk Wala.
+Complete schema and structure documentation for the authentication pages in Milk Karan.
 
 ## 📋 Table of Contents
 
@@ -33,7 +33,7 @@ LoginScreen
 │       ├── TouchableOpacity (Sign In button)
 │       │   └── ActivityIndicator | Text ("Sign In")
 │       └── View (footerRow)
-│           ├── Text ("New to Milk Wala?")
+│           ├── Text ("New to Milk Karan?")
 │           └── TouchableOpacity (navigate to Register)
 │               └── Text ("Create an account")
 ```

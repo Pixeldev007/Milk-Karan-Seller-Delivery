@@ -134,7 +134,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
   },
   primaryButton: {
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
     borderRadius: 10,
     paddingVertical: 16,
     alignItems: 'center',

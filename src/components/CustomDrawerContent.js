@@ -113,9 +113,9 @@ export default function CustomDrawerContent({ navigation }) {
               }
             }}
           >
-            <Ionicons name={item.icon} size={24} color="#66BB6A" />
+            <Ionicons name={item.icon} size={24} color="#01559d" />
             <Text style={styles.menuText}>{item.title}</Text>
-            <Ionicons name="chevron-forward" size={20} color="#66BB6A" />
+            <Ionicons name="chevron-forward" size={20} color="#01559d" />
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -126,17 +126,17 @@ export default function CustomDrawerContent({ navigation }) {
         
         {/* Language Selector */}
         <View style={styles.languageSelector}>
-          <Ionicons name="language" size={24} color="#66BB6A" />
+          <Ionicons name="language" size={24} color="#01559d" />
           <View style={styles.languageButton}>
             <Text style={styles.languageText}>English</Text>
-            <Ionicons name="chevron-down" size={20} color="#66BB6A" />
+            <Ionicons name="chevron-down" size={20} color="#01559d" />
           </View>
         </View>
 
         {/* Social Icons */}
         <View style={styles.socialContainer}>
           {socialIcons.map((item) => (
-            <TouchableOpacity key={item.id} style={[styles.socialIcon, { backgroundColor: '#66BB6A' }]}>
+            <TouchableOpacity key={item.id} style={[styles.socialIcon, { backgroundColor: '#01559d' }]}>
               <Ionicons name={item.icon} size={24} color="#fff" />
             </TouchableOpacity>
           ))}
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   profileSection: {
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 20,
     paddingHorizontal: 20,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#66BB6A',
+    color: '#01559d',
   },
   profileInfo: {
     flex: 1,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   profileEmail: {
     fontSize: 14,
-    color: '#E8F5E9',
+    color: '#FFFFFF',
     marginBottom: 2,
   },
   menuContainer: {

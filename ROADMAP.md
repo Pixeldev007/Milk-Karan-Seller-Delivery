@@ -1,4 +1,4 @@
-# Milk Wala - Feature Roadmap
+# Milk Karan - Feature Roadmap
 
 ## ✅ Phase 1: UI Foundation (COMPLETED)
 

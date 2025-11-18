@@ -146,11 +146,11 @@ export default function CreateBillScreen() {
             <Text style={styles.smallLabel}>From</Text>
             <View style={styles.dateControls}>
               <TouchableOpacity style={styles.dateBtn} onPress={decFrom}>
-                <Ionicons name="chevron-back" size={18} color="#2e7d32" />
+                <Ionicons name="chevron-back" size={18} color="#01559d" />
               </TouchableOpacity>
               <Text style={styles.dateText}>{toYMD(new Date(fromDate))}</Text>
               <TouchableOpacity style={styles.dateBtn} onPress={incFrom}>
-                <Ionicons name="chevron-forward" size={18} color="#2e7d32" />
+                <Ionicons name="chevron-forward" size={18} color="#01559d" />
               </TouchableOpacity>
             </View>
           </View>
@@ -158,11 +158,11 @@ export default function CreateBillScreen() {
             <Text style={styles.smallLabel}>To</Text>
             <View style={styles.dateControls}>
               <TouchableOpacity style={styles.dateBtn} onPress={decTo}>
-                <Ionicons name="chevron-back" size={18} color="#2e7d32" />
+                <Ionicons name="chevron-back" size={18} color="#01559d" />
               </TouchableOpacity>
               <Text style={styles.dateText}>{toYMD(new Date(toDate))}</Text>
               <TouchableOpacity style={styles.dateBtn} onPress={incTo}>
-                <Ionicons name="chevron-forward" size={18} color="#2e7d32" />
+                <Ionicons name="chevron-forward" size={18} color="#01559d" />
               </TouchableOpacity>
             </View>
           </View>
@@ -183,7 +183,7 @@ export default function CreateBillScreen() {
           <View style={[styles.flexItem, { marginLeft: 8 }]}> 
             <Text style={styles.label}>Total Milk (L)</Text>
             <View style={[styles.input, { justifyContent: 'center' }]}> 
-              <Text style={{ fontWeight: '700', color: '#2e7d32' }}>{totalMilkL}</Text>
+              <Text style={{ fontWeight: '700', color: '#01559d' }}>{totalMilkL}</Text>
             </View>
           </View>
         </View>
@@ -201,8 +201,8 @@ export default function CreateBillScreen() {
         {/* Actions */}
         <View style={styles.actions}>
           <TouchableOpacity style={[styles.actionBtn, styles.pdfBtn]} onPress={onGeneratePdf}>
-            <Ionicons name="document-outline" size={18} color="#2e7d32" />
-            <Text style={[styles.actionText, { color: '#2e7d32' }]}>Generate PDF</Text>
+            <Ionicons name="document-outline" size={18} color="#01559d" />
+            <Text style={[styles.actionText, { color: '#01559d' }]}>Generate PDF</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionBtn, styles.whatsBtn]} onPress={onSendWhatsApp}>
             <Ionicons name="logo-whatsapp" size={18} color="#fff" />
@@ -218,12 +218,12 @@ export default function CreateBillScreen() {
             <Text style={styles.modalTitle}>Select Customer</Text>
             {loadingCustomers ? (
               <View style={{ paddingVertical: 16, alignItems: 'center' }}>
-                <ActivityIndicator color="#66BB6A" />
+                <ActivityIndicator color="#01559d" />
               </View>
             ) : (
               customers.map((c) => (
                 <TouchableOpacity key={c.id} style={styles.modalItem} onPress={() => onPickCustomer(c)}>
-                  <Ionicons name="person-circle-outline" size={22} color="#66BB6A" />
+                  <Ionicons name="person-circle-outline" size={22} color="#01559d" />
                   <Text style={styles.modalItemText}>{c.name} ({c.phone})</Text>
                 </TouchableOpacity>
               ))
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f7f7f7',
   },
   header: {
-    backgroundColor: '#90EE90',
+    backgroundColor: '#01559d',
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   dateBtn: {
     padding: 6,
     borderRadius: 8,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#FFFFFF',
   },
   dateText: {
     fontWeight: '700',
@@ -351,9 +351,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   pdfBtn: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#66BB6A',
+    borderColor: '#01559d',
     flex: 1,
   },
   whatsBtn: {

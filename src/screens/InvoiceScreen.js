@@ -239,7 +239,7 @@ export default function InvoiceScreen({ navigation }) {
       <View style={styles.body}>
         {loading ? (
           <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-            <ActivityIndicator size="small" color="#66BB6A" />
+            <ActivityIndicator size="small" color="#01559d" />
           </View>
         ) : (
           <FlatList
@@ -421,14 +421,14 @@ const styles = StyleSheet.create({
   header: {},
   headerTitle: {},
   headerActions: { paddingHorizontal: 16, paddingTop: 12, alignSelf: 'center', width: '100%', maxWidth: 900 },
-  createBtn: { backgroundColor: '#66BB6A', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
+  createBtn: { backgroundColor: '#01559d', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
   createBtnText: { color: '#fff', fontWeight: '700' },
   body: { padding: 16, alignSelf: 'center', width: '100%', maxWidth: 900 },
   label: { fontSize: 13, color: '#666', marginTop: 12, marginBottom: 6, fontWeight: '600' },
   input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12 },
   chipsRow: { flexDirection: 'row', gap: 8, marginBottom: 4 },
   chip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1, borderColor: '#ddd', backgroundColor: '#fff' },
-  chipActive: { backgroundColor: '#E8F5E9', borderColor: '#66BB6A' },
+  chipActive: { backgroundColor: '#FFFFFF', borderColor: '#01559d' },
   chipText: { color: '#555', fontWeight: '600' },
   chipTextActive: { color: '#2e7d32' },
   cardRow: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center' },
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#333' },
   modalClose: { color: '#2e7d32', fontWeight: '700' },
-  saveBtn: { backgroundColor: '#66BB6A', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18 },
+  saveBtn: { backgroundColor: '#01559d', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18 },
   saveText: { color: '#fff', fontWeight: '700' },
   select: { marginTop: 8, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: '#e5e5e5', backgroundColor: '#fff' },
   selectText: { color: '#333', fontWeight: '600' },

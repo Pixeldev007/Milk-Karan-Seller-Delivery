@@ -39,6 +39,6 @@ const styles = StyleSheet.create({
   qrBox: { width: 180, height: 180, borderRadius: 12, backgroundColor: '#fafafa', borderWidth: 1, borderColor: '#eee', alignItems: 'center', justifyContent: 'center' },
   url: { marginTop: 12, color: '#2e7d32', fontWeight: '700' },
   instruction: { marginTop: 6, color: '#666' },
-  copyBtn: { backgroundColor: '#66BB6A', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, marginTop: 14 },
+  copyBtn: { backgroundColor: '#01559d', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, marginTop: 14 },
   copyText: { color: '#fff', fontWeight: '700' },
 });

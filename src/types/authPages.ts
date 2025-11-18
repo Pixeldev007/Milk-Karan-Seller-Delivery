@@ -114,16 +114,12 @@ export interface RegisterPageConfig {
 // ============================================
 
 export interface ColorScheme {
-  background: '#E8F5E9';
-  cardBackground: '#fff';
-  primaryGreen: '#66BB6A';
-  darkGreen: '#1B5E20';
-  mediumGreen: '#2E7D32';
-  lightGreenBorder: '#C8E6C9';
-  gray: '#4F5B62';
-  error: '#D32F2F';
-  success: '#2E7D32';
-  white: '#fff';
+  background: '#FFFFFF';
+  cardBackground: '#FFFFFF';
+  primary: '#01559d';
+  inactive: '#bebebe';
+  text: '#000000';
+  white: '#ffffff';
 }
 
 export interface AuthPageStyling {

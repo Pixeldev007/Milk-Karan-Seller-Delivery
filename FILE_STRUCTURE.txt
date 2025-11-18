@@ -1,4 +1,4 @@
-Milk Wala - Complete File Structure
+Milk Karan - Complete File Structure
 ====================================
 
 milk-wala/
@@ -298,6 +298,6 @@ Contact
 =======
 
 Powered by: Ruhiverse Technologies
-App Name:   Milk Wala
+App Name:   Milk Karan
 Tagline:    India's milk app ❤️
 Version:    1.0.0

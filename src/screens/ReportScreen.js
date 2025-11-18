@@ -103,14 +103,14 @@ export default function ReportScreen() {
         {/* Anchor date controls */}
         <View style={styles.anchorRow}>
           <TouchableOpacity style={styles.anchorBtn} onPress={() => shiftAnchor(-1)}>
-            <Ionicons name="chevron-back" size={18} color="#2e7d32" />
+            <Ionicons name="chevron-back" size={18} color="#01559d" />
           </TouchableOpacity>
           <Text style={styles.anchorText}>
             {activeTab}: {toYMD(range.from)}
             {range.to > range.from ? ` → ${toYMD(range.to)}` : ''}
           </Text>
           <TouchableOpacity style={styles.anchorBtn} onPress={() => shiftAnchor(1)}>
-            <Ionicons name="chevron-forward" size={18} color="#2e7d32" />
+            <Ionicons name="chevron-forward" size={18} color="#01559d" />
           </TouchableOpacity>
         </View>
 
@@ -118,11 +118,11 @@ export default function ReportScreen() {
         <View style={styles.cardsRow}>
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Total Milk Sold</Text>
-            <Text style={[styles.cardValue, { color: '#2e7d32' }]}>{totalMilk.toFixed(2)} L</Text>
+            <Text style={[styles.cardValue, { color: '#01559d' }]}>{totalMilk.toFixed(2)} L</Text>
           </View>
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Income</Text>
-            <Text style={[styles.cardValue, { color: '#2e7d32' }]}>₹ {income.toFixed(2)}</Text>
+            <Text style={[styles.cardValue, { color: '#01559d' }]}>₹ {income.toFixed(2)}</Text>
           </View>
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Pending Amount</Text>
@@ -133,8 +133,8 @@ export default function ReportScreen() {
         {/* Export Buttons */}
         <View style={styles.exportRow}>
           <TouchableOpacity style={[styles.exportBtn, styles.pdfBtn]} onPress={onExportPDF}>
-            <Ionicons name="document-outline" size={18} color="#2e7d32" />
-            <Text style={[styles.exportText, { color: '#2e7d32' }]}>Export PDF</Text>
+            <Ionicons name="document-outline" size={18} color="#01559d" />
+            <Text style={[styles.exportText, { color: '#01559d' }]}>Export PDF</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.exportBtn, styles.xlsBtn]} onPress={onExportExcel}>
             <Ionicons name="download-outline" size={18} color="#fff" />
@@ -151,7 +151,7 @@ export default function ReportScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f7f7f7' },
   header: {
-    backgroundColor: '#90EE90',
+    backgroundColor: '#01559d',
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -176,16 +176,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 14,
   },
-  tabBtnActive: { backgroundColor: '#E8F5E9', borderColor: '#66BB6A' },
+  tabBtnActive: { backgroundColor: '#FFFFFF', borderColor: '#01559d' },
   tabText: { color: '#555', fontWeight: '700' },
-  tabTextActive: { color: '#2e7d32' },
+  tabTextActive: { color: '#01559d' },
   anchorRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
   },
-  anchorBtn: { padding: 8, borderRadius: 8, backgroundColor: '#E8F5E9' },
+  anchorBtn: { padding: 8, borderRadius: 8, backgroundColor: '#FFFFFF' },
   anchorText: { fontWeight: '700', color: '#333' },
   cardsRow: {
     flexDirection: 'row',
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 10,
   },
-  pdfBtn: { backgroundColor: '#E8F5E9', borderWidth: 1, borderColor: '#66BB6A' },
+  pdfBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#01559d' },
   xlsBtn: { backgroundColor: '#25D366' },
   exportText: { fontWeight: '700' },
   note: { color: '#888', marginTop: 16 },

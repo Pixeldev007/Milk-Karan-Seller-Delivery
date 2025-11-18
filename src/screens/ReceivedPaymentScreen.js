@@ -105,7 +105,7 @@ export default function ReceivedPaymentScreen() {
 
       {loading ? (
         <View style={{ paddingVertical: 32, alignItems: 'center' }}>
-          <ActivityIndicator size="small" color="#66BB6A" />
+          <ActivityIndicator size="small" color="#01559d" />
         </View>
       ) : (
         <FlatList
@@ -130,7 +130,7 @@ export default function ReceivedPaymentScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f7f7f7' },
   header: {
-    backgroundColor: '#90EE90',
+    backgroundColor: '#01559d',
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingHorizontal: 16, paddingTop: 12 },
   searchBox: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
   searchInput: { flex: 1, fontSize: 14, color: '#333' },
-  addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#66BB6A', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10 },
+  addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#01559d', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10 },
   addText: { color: '#fff', fontWeight: '700', marginLeft: 8 },
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee', marginHorizontal: 16, marginTop: 12, borderRadius: 8, padding: 10 },
   headerRow: { backgroundColor: '#f3f3f3', borderColor: '#e1e1e1' },
@@ -157,12 +157,12 @@ const styles = StyleSheet.create({
   modalActions: { marginTop: 16, flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
   modalBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 },
   cancelBtn: { backgroundColor: '#f1f1f1' },
-  saveBtn: { backgroundColor: '#66BB6A' },
+  saveBtn: { backgroundColor: '#01559d' },
   toggleRow: { marginTop: 10 },
   toggleLabel: { fontSize: 13, color: '#666', marginBottom: 6 },
   toggleGroup: { flexDirection: 'row', gap: 8 },
   toggleBtn: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 8, borderWidth: 1, borderColor: '#ddd', backgroundColor: '#fff' },
-  toggleBtnActive: { backgroundColor: '#E8F5E9', borderColor: '#66BB6A' },
+  toggleBtnActive: { backgroundColor: '#FFFFFF', borderColor: '#01559d' },
   toggleText: { color: '#555', fontWeight: '600' },
-  toggleTextActive: { color: '#2e7d32' },
+  toggleTextActive: { color: '#01559d' },
 });

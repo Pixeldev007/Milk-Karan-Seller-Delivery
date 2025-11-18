@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Milk Wala Authentication Pages Schema",
+  "title": "Milk Karan Authentication Pages Schema",
   "description": "Complete schema for Login and Register pages",
   "definitions": {
     "loginPage": {
@@ -285,39 +285,23 @@
       "properties": {
         "background": {
           "type": "string",
-          "const": "#E8F5E9"
+          "const": "#FFFFFF"
         },
         "cardBackground": {
           "type": "string",
-          "const": "#fff"
+          "const": "#FFFFFF"
         },
-        "primaryGreen": {
+        "primary": {
           "type": "string",
-          "const": "#66BB6A"
+          "const": "#01559d"
         },
-        "darkGreen": {
+        "inactive": {
           "type": "string",
-          "const": "#1B5E20"
+          "const": "#bebebe"
         },
-        "mediumGreen": {
+        "text": {
           "type": "string",
-          "const": "#2E7D32"
-        },
-        "lightGreenBorder": {
-          "type": "string",
-          "const": "#C8E6C9"
-        },
-        "gray": {
-          "type": "string",
-          "const": "#4F5B62"
-        },
-        "error": {
-          "type": "string",
-          "const": "#D32F2F"
-        },
-        "success": {
-          "type": "string",
-          "const": "#2E7D32"
+          "const": "#000000"
         }
       }
     },
@@ -330,7 +314,7 @@
           "properties": {
             "backgroundColor": {
               "type": "string",
-              "const": "#E8F5E9"
+              "const": "#FFFFFF"
             },
             "paddingHorizontal": {
               "type": "number",
@@ -347,7 +331,7 @@
             },
             "backgroundColor": {
               "type": "string",
-              "const": "#fff"
+              "const": "#ffffff"
             },
             "borderRadius": {
               "type": "number",
@@ -372,7 +356,7 @@
             },
             "borderColor": {
               "type": "string",
-              "const": "#C8E6C9"
+              "const": "#bebebe"
             },
             "borderRadius": {
               "type": "number",
@@ -397,7 +381,7 @@
           "properties": {
             "backgroundColor": {
               "type": "string",
-              "const": "#66BB6A"
+              "const": "#01559d"
             },
             "borderRadius": {
               "type": "number",

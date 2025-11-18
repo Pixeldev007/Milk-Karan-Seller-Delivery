@@ -40,8 +40,8 @@ export default function MessageScreen() {
             <Text style={[styles.btnText, { color: '#fff' }]}>Send via WhatsApp</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.btn, styles.notifBtn]} onPress={sendNotification}>
-            <Ionicons name="notifications-outline" size={18} color="#2e7d32" />
-            <Text style={[styles.btnText, { color: '#2e7d32' }]}>Send Notification</Text>
+            <Ionicons name="notifications-outline" size={18} color="#01559d" />
+            <Text style={[styles.btnText, { color: '#01559d' }]}>Send Notification</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -52,7 +52,7 @@ export default function MessageScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f7f7f7' },
   header: {
-    backgroundColor: '#90EE90',
+    backgroundColor: '#01559d',
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -70,6 +70,6 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 10, marginTop: 14 },
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center', borderRadius: 10, paddingVertical: 12 },
   waBtn: { backgroundColor: '#25D366' },
-  notifBtn: { backgroundColor: '#E8F5E9', borderWidth: 1, borderColor: '#66BB6A' },
+  notifBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#01559d' },
   btnText: { fontWeight: '700' },
 });

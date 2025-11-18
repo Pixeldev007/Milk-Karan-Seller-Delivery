@@ -25,9 +25,8 @@ export const HeaderBar: React.FC<Props> = ({ title, onPressMenu, showBack, onPre
               <Ionicons name="menu" size={24} color="#fff" />
             </TouchableOpacity>
           )}
-          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
+          <Text style={styles.brand} numberOfLines={1} ellipsizeMode="tail">Milk Karan</Text>
         </View>
-        <Text style={styles.brand} numberOfLines={1} ellipsizeMode="tail">MILK WALA</Text>
       </View>
     </SafeAreaView>
   );
@@ -38,7 +37,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   container: {
-    height: 56,
+    height: 72,
     backgroundColor: Colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
@@ -61,8 +60,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '800',
     letterSpacing: 0.5,
-    textAlign: 'right',
-    maxWidth: '45%',
+    textAlign: 'left',
+    maxWidth: '80%',
     marginLeft: 8,
   },
   iconBtn: { padding: 6 },

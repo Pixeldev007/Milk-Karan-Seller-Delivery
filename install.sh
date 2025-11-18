@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🥛 Installing Milk Wala App Dependencies..."
+echo "🥛 Installing Milk Karan App Dependencies..."
 echo ""
 
 # Check if Node.js is installed

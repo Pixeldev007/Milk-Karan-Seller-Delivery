@@ -27,7 +27,7 @@ export const HeaderBar: React.FC<Props> = ({ title, onPressMenu, showBack, onPre
           )}
           <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
         </View>
-        <Text style={styles.brand} numberOfLines={1} ellipsizeMode="tail">MILK WALA</Text>
+        <Text style={styles.brand} numberOfLines={1} ellipsizeMode="tail">Milk Karan</Text>
       </View>
     </SafeAreaView>
   );

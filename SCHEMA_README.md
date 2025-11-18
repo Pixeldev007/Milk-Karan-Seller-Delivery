@@ -1,6 +1,6 @@
-# Database Schema for Milk Wala
+# Database Schema for Milk Karan
 
-This document describes the database schema for authenticated users in the Milk Wala application.
+This document describes the database schema for authenticated users in the Milk Karan application.
 
 ## 📋 Overview
 

@@ -28,6 +28,6 @@ const styles = StyleSheet.create({
   uploadBox: { backgroundColor: '#fafafa', borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, padding: 20, alignItems: 'center' },
   link: { color: '#2e7d32', marginTop: 10, fontWeight: '700' },
   note: { color: '#666', marginTop: 6 },
-  saveBtn: { backgroundColor: '#66BB6A', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18 },
+  saveBtn: { backgroundColor: '#01559d', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 18 },
   saveText: { color: '#fff', fontWeight: '700' },
 });

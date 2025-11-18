@@ -1,5 +1,5 @@
 -- ============================================
--- Milk Wala - Authentication Schema
+-- Milk Karan - Authentication Schema
 -- ============================================
 -- Database schema for Login and Register pages
 -- Matches exactly with the app UI forms

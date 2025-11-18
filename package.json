@@ -1,7 +1,7 @@
 {
   "name": "milk-wala",
   "version": "1.0.0",
-  "description": "Milk Wala - Dairy Management App",
+  "description": "Milk Karan - Dairy Management App",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",

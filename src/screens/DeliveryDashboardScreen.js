@@ -23,7 +23,7 @@ export default function DeliveryDashboardScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#FFFFFF',
     padding: 20,
     paddingTop: 48,
   },

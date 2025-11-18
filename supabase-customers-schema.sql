@@ -1,5 +1,5 @@
 -- ============================================
--- Milk Wala - Customers Table Schema
+-- Milk Karan - Customers Table Schema
 -- ============================================
 -- Database schema for storing customers
 -- Run this SQL in your Supabase SQL Editor

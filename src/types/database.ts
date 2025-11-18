@@ -1,5 +1,5 @@
 /**
- * Database Types for Milk Wala
+ * Database Types for Milk Karan
  * These types match the Supabase schema
  */
 

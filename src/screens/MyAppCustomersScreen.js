@@ -48,6 +48,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#eee', padding: 12, marginTop: 12, flexDirection: 'row', gap: 10, alignItems: 'center' },
   name: { fontSize: 16, fontWeight: '700', color: '#333' },
   sub: { fontSize: 13, color: '#666', marginTop: 2 },
-  viewBtn: { backgroundColor: '#E8F5E9', borderWidth: 1, borderColor: '#66BB6A', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
+  viewBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#01559d', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
   viewText: { color: '#2e7d32', fontWeight: '700' },
 });

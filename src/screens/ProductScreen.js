@@ -159,7 +159,7 @@ export default function ProductScreen({ navigation }) {
       <HeaderBar title="Products" navigation={navigation} />
 
       {connState.checked && (
-        <View style={[styles.connBanner, { backgroundColor: connState.ok ? '#E8F5E9' : '#FFEBEE', borderColor: connState.ok ? '#A5D6A7' : '#FFCDD2' }]}>
+        <View style={[styles.connBanner, { backgroundColor: connState.ok ? '#FFFFFF' : '#FFEBEE', borderColor: connState.ok ? '#A5D6A7' : '#FFCDD2' }]}>
           <Text style={{ color: connState.ok ? '#2E7D32' : '#C62828', fontWeight: '700' }}>
             {connState.ok ? 'Supabase: Connected' : 'Supabase: Not Connected'}
           </Text>
@@ -174,7 +174,7 @@ export default function ProductScreen({ navigation }) {
       <ScreenContainer>
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="small" color="#66BB6A" />
+          <ActivityIndicator size="small" color="#01559d" />
         </View>
       )}
       <View style={styles.toolbar}>
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingHorizontal: 16, paddingTop: 12 },
   searchBox: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
   searchInput: { flex: 1, fontSize: 14, color: '#333' },
-  addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#66BB6A', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10 },
+  addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#01559d', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10 },
   addText: { color: '#fff', fontWeight: '700', marginLeft: 8 },
   varietyChips: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4, gap: 8 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#E3F2FD', borderRadius: 16, borderWidth: 1, borderColor: '#D6EAF8', marginRight: 8 },
@@ -258,6 +258,6 @@ const styles = StyleSheet.create({
   modalActions: { marginTop: 16, flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
   modalBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 },
   cancelBtn: { backgroundColor: '#f1f1f1' },
-  saveBtn: { backgroundColor: '#66BB6A' },
+  saveBtn: { backgroundColor: '#01559d' },
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center', paddingVertical: 8, zIndex: 1 },
 });

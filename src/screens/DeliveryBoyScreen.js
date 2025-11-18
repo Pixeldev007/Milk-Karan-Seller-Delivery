@@ -209,7 +209,7 @@ export default function DeliveryBoyScreen() {
         ListEmptyComponent={() => (
           loading ? (
             <View style={styles.empty}>
-              <ActivityIndicator size="small" color="#66BB6A" />
+              <ActivityIndicator size="small" color="#01559d" />
             </View>
           ) : (
             <View style={styles.empty}>
@@ -279,7 +279,7 @@ export default function DeliveryBoyScreen() {
                         <Ionicons
                           name={checked ? 'checkbox' : 'square-outline'}
                           size={20}
-                          color={checked ? '#2e7d32' : '#777'}
+                          color={checked ? '#01559d' : '#777'}
                         />
                         <Text style={styles.dropdownText}>{customer.name}</Text>
                       </TouchableOpacity>
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f7f7f7',
   },
   header: {
-    backgroundColor: '#90EE90',
+    backgroundColor: '#01559d',
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -348,13 +348,14 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    minWidth: 0, // allow flex to shrink on web so text stays inside the box
     fontSize: 14,
     color: '#333',
   },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 10,
@@ -461,7 +462,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f1f1',
   },
   saveBtn: {
-    backgroundColor: '#66BB6A',
+    backgroundColor: '#01559d',
   },
   dropdownList: {
     borderWidth: 1,

@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   headerTitle: {},
   body: { padding: 16, alignSelf: 'center', width: '100%', maxWidth: 900 },
   text: { color: '#666' },
-  primaryBtn: { backgroundColor: '#66BB6A', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 12 },
+  primaryBtn: { backgroundColor: '#01559d', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 12 },
   primaryText: { color: '#fff', fontWeight: '700' },
   dangerBtn: { backgroundColor: '#FFEBEE', borderWidth: 1, borderColor: '#FFCDD2', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 12 },
   dangerText: { color: '#D32F2F', fontWeight: '700' },

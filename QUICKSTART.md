@@ -1,4 +1,4 @@
-# Quick Start Guide - Milk Wala App
+# Quick Start Guide - Milk Karan App
 
 ## Prerequisites
 
@@ -72,4 +72,4 @@ You can customize:
 - Implement actual features for each module
 - Add more screens and navigation
 
-Enjoy building with Milk Wala! 🥛
+Enjoy building with Milk Karan! 🥛

@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1B5E20',
+    color: '#01559d',
     marginBottom: 8,
   },
   subtitle: {
@@ -167,13 +167,13 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 15,
-    color: '#2E7D32',
+    color: '#01559d',
     marginBottom: 6,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#C8E6C9',
+    borderColor: '#01559d',
     borderRadius: 10,
     paddingHorizontal: 14,
     fontSize: 16,
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 15,
-    color: '#1B5E20',
+    color: '#01559d',
     fontWeight: '600',
     marginLeft: 6,
   },
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   message: {
-    color: '#2E7D32',
+    color: '#01559d',
     marginBottom: 12,
   },
 });

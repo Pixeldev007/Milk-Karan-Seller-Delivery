@@ -153,8 +153,8 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     backgroundColor: '#01559d',
-    paddingTop: Platform.OS === 'ios' ? 50 : 40,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 48,
+    paddingBottom: 26,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',

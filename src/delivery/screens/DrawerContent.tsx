@@ -78,9 +78,6 @@ export const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       </View>
 
       <DrawerItem icon="home" label="Dashboard" onPress={() => props.navigation.navigate('Dashboard' as never)} />
-      <DrawerItem icon="car" label="My Pickup" onPress={() => props.navigation.navigate('MyPickup' as never)} />
-      <DrawerItem icon="receipt" label="Create Bill" onPress={() => props.navigation.navigate('Bill' as never)} />
-      <DrawerItem icon="bus" label="My Delivery" onPress={() => props.navigation.navigate('MyDelivery' as never)} />
       <DrawerItem icon="document-text" label="Report" onPress={() => props.navigation.navigate('Report' as never)} />
       <DrawerItem icon="settings" label="Settings" onPress={() => props.navigation.navigate('Settings' as never)} />
       <DrawerItem icon="star" label="Rate Us" onPress={async () => {
@@ -167,7 +164,7 @@ const DrawerItem: React.FC<{ icon: keyof typeof Ionicons.glyphMap; label: string
 );
 
 const styles = StyleSheet.create({
-  header: { backgroundColor: Colors.primary, padding: 16, flexDirection: 'row', alignItems: 'center' },
+  header: { backgroundColor: Colors.primary, paddingHorizontal: 16, paddingVertical: 26, flexDirection: 'row', alignItems: 'center' },
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: Colors.primaryText, fontWeight: '800' },
   name: { color: '#fff', fontWeight: '700' },

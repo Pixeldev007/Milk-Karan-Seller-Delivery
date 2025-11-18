@@ -54,7 +54,7 @@ export default function DashboardScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <HeaderBar title="Milk Wala" navigation={navigation} />
+      <HeaderBar title="Milk Karan" navigation={navigation} />
       <FlatList
         data={menuItems}
         keyExtractor={(item) => String(item.id)}

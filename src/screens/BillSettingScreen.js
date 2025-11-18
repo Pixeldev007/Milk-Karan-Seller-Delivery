@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Platform, TextInput, Switch, TouchableOpacity, 
 import HeaderBar from '../components/HeaderBar';
 
 export default function BillSettingScreen({ navigation }) {
-  const [header, setHeader] = React.useState('Milk Wala Invoice');
+  const [header, setHeader] = React.useState('Milk Karan Invoice');
   const [footer, setFooter] = React.useState('Thanks for your business!');
   const [logo, setLogo] = React.useState(true);
   const onSave = () => Alert.alert('Saved', 'Bill settings saved.');

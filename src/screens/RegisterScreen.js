@@ -58,7 +58,7 @@ export default function RegisterScreen() {
     >
       <View style={styles.card}>
         <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Join Milk Wala to simplify your dairy management.</Text>
+        <Text style={styles.subtitle}>Join Milk Karan to simplify your dairy management.</Text>
 
         {!!error && <Text style={styles.error}>{error}</Text>}
         {!!message && <Text style={styles.message}>{message}</Text>}

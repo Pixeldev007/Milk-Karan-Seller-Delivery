@@ -95,7 +95,7 @@ export default function LoginScreen() {
         </TouchableOpacity>
 
         <View style={styles.footerRow}>
-          <Text style={styles.footerText}>New to Milk Wala?</Text>
+          <Text style={styles.footerText}>New to Milk Karan?</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')} disabled={loading}>
             <Text style={styles.footerLink}>Create an account</Text>
           </TouchableOpacity>

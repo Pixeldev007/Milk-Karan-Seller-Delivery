@@ -10,13 +10,13 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.milkwala"
+      "bundleIdentifier": "com.pixelperfect.milkkaran"
     },
     "plugins": [
       "expo-font"
     ],
     "android": {
-      "package": "com.anonymous.milkwala"
+      "package": "com.pixelperfect.milkkaran"
     }
   }
 }

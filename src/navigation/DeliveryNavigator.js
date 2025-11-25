@@ -34,6 +34,12 @@ function ReportScreenLazy(props) {
   return <ReportScreen {...props} />;
 }
 
+// Lazy wrapper for SettingsScreen so delivery drawer has a Settings route
+function SettingsScreenLazy(props) {
+  const { SettingsScreen } = require('../delivery/screens/SettingsScreen');
+  return <SettingsScreen {...props} />;
+}
+
 export default function DeliveryNavigator() {
   // Bridge: if seller AuthContext already has deliveryAgent, seed delivery AuthContext
   function Bridge({ children }) {
@@ -70,6 +76,7 @@ export default function DeliveryNavigator() {
             <Drawer.Screen name="Bill" component={BillScreenLazy} />
             <Drawer.Screen name="MyDelivery" component={MyDeliveryScreen} />
             <Drawer.Screen name="Report" component={ReportScreenLazy} />
+            <Drawer.Screen name="Settings" component={SettingsScreenLazy} />
           </Drawer.Navigator>
         </Bridge>
       </DeliveryProvider>

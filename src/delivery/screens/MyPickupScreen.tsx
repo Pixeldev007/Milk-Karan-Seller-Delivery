@@ -32,9 +32,13 @@ export const MyPickupScreen: React.FC = () => {
   );
 
   const agentAssignments = React.useMemo(() => {
-    const filtered = assignments.filter((a) => (deliveryAgent?.id ? a.deliveryAgentId === deliveryAgent.id : true));
+    const baseList = (() => {
+      if (!deliveryAgent?.id) return assignments;
+      const byAgent = assignments.filter((a) => a.deliveryAgentId === deliveryAgent.id);
+      return byAgent.length > 0 ? byAgent : assignments;
+    })();
     const group = new Map<string, typeof assignments[number][]>();
-    for (const a of filtered) {
+    for (const a of baseList) {
       const arr = group.get(a.customerId) || [];
       arr.push(a);
       group.set(a.customerId, arr);
@@ -144,12 +148,11 @@ export const MyPickupScreen: React.FC = () => {
                   {!!customer?.plan && <Text style={styles.assignmentMeta}>Plan: {customer.plan}</Text>}
                 </View>
                 <View style={styles.switchWrap}>
-                  <Text style={styles.switchLabel}>{assignment.delivered ? 'Delivered' : 'Deliver Pending'}</Text>
                   <TouchableOpacity
                     activeOpacity={0.8}
                     style={[
-                      styles.toggleBtn,
-                      assignment.delivered ? styles.toggleBtnOn : styles.toggleBtnOff,
+                      styles.actionBtn,
+                      assignment.delivered ? styles.actionBtnDelivered : styles.actionBtnPending,
                     ]}
                     onPress={async () => {
                       try {
@@ -168,19 +171,21 @@ export const MyPickupScreen: React.FC = () => {
                         );
                         Alert.alert(
                           next ? 'Marked Delivered' : 'Marked Pending',
-                          `${customer?.name || 'Customer'} • ${assignment.shift || 'morning'} • ${(next ? qtyOn : qtyOff)} L`
+                          `${customer?.name || 'Customer'} • ${assignment.shift || 'morning'} • ${(next ? qtyOn : qtyOff)} L`,
                         );
                       } catch (e: any) {
                         Alert.alert('Update failed', e?.message || 'Could not update delivery status.');
                       }
                     }}
                   >
-                    <View style={styles.toggleTrack}>
-                      <View style={[styles.toggleThumb, assignment.delivered ? styles.toggleThumbOn : styles.toggleThumbOff]} />
-                      <Text style={[styles.toggleText, assignment.delivered ? styles.toggleTextOn : styles.toggleTextOff]}>
-                        {assignment.delivered ? 'Delivered' : 'Pending'}
-                      </Text>
-                    </View>
+                    <Text
+                      style={[
+                        styles.actionBtnText,
+                        assignment.delivered ? styles.toggleTextOn : styles.toggleTextOff,
+                      ]}
+                    >
+                      {assignment.delivered ? 'Delivered' : 'Mark as Delivered'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -314,13 +319,16 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
     alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 140,
   },
   actionBtnText: {
     color: '#fff',
     fontWeight: '700',
+    fontSize: 13,
   },
   modalBackdrop: {
     flex: 1,
@@ -350,4 +358,6 @@ const styles = StyleSheet.create({
   toggleText: { width: '100%', textAlign: 'center', fontWeight: '700', fontSize: 12 },
   toggleTextOn: { color: '#15803d' },
   toggleTextOff: { color: Colors.muted },
+  actionBtnDelivered: { backgroundColor: '#dcfce7', borderWidth: 1, borderColor: '#16a34a' },
+  actionBtnPending: { backgroundColor: Colors.primary, borderWidth: 1, borderColor: Colors.primary },
 });

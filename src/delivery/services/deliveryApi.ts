@@ -3,25 +3,63 @@ import type { Assignment, Customer, DeliveryAgent } from '../data/mock';
 
 export async function fetchCustomers(agentId?: string): Promise<Customer[]> {
   if (!SUPABASE_CONFIGURED || !supabase) return [];
-  // If agentId provided, prefer RPC to bypass RLS constraints
+
   if (agentId) {
-    const { data: rpc } = await supabase.rpc('get_agent_customers', { p_agent_id: agentId });
-    return (rpc || []).map((r: any) => ({
-      id: r.id,
-      userId: r.user_id,
-      name: r.name,
-      phone: r.phone,
-      address: r.address ?? undefined,
-      product: (r.product as any) ?? 'Buffalo Milk',
-      rate: Number((r.rate as any) ?? 0),
-      plan: r.plan ?? '',
-      planType: r.plan_type ?? 'Daily',
-      preferredShift: (r.preferred_shift as any) ?? undefined,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }));
+    const { data: rpc, error: rpcError } = await supabase.rpc('get_agent_customers', { p_agent_id: agentId });
+    if (!rpcError && rpc && rpc.length > 0) {
+      return rpc.map((r: any) => ({
+        id: r.id,
+        userId: r.user_id,
+        name: r.name,
+        phone: r.phone,
+        address: r.address ?? undefined,
+        product: (r.product as any) ?? 'Buffalo Milk',
+        rate: Number((r.rate as any) ?? 0),
+        plan: r.plan ?? '',
+        planType: r.plan_type ?? 'Daily',
+        preferredShift: (r.preferred_shift as any) ?? undefined,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      }));
+    }
+
+    try {
+      const { data: asg } = await supabase
+        .from('delivery_assignments_view')
+        .select('customer_id')
+        .eq('delivery_agent_id', agentId);
+      const ids = Array.from(
+        new Set(
+          (asg || [])
+            .map((r: any) => r.customer_id)
+            .filter((id: any) => typeof id === 'string' && id.length > 0),
+        ),
+      );
+      if (ids.length > 0) {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('id,user_id,name,phone,address,plan,plan_type,preferred_shift,created_at,updated_at')
+          .in('id', ids)
+          .order('name', { ascending: true });
+        if (error) throw error;
+        return (data || []).map((r: any) => ({
+          id: r.id,
+          userId: r.user_id,
+          name: r.name,
+          phone: r.phone,
+          address: r.address ?? undefined,
+          product: (r.product as any) ?? 'Buffalo Milk',
+          rate: Number((r.rate as any) ?? 0),
+          plan: r.plan ?? '',
+          planType: r.plan_type ?? 'Daily',
+          preferredShift: (r.preferred_shift as any) ?? undefined,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at,
+        }));
+      }
+    } catch {}
   }
-  // Otherwise, attempt direct select (when authenticated)
+
   const { data, error } = await supabase
     .from('customers')
     .select('id,user_id,name,phone,address,plan,plan_type,preferred_shift,created_at,updated_at')

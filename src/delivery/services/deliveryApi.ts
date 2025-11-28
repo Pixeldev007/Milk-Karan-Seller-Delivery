@@ -171,27 +171,21 @@ export async function fetchDeliveryAgents(agentId?: string): Promise<DeliveryAge
 
 export async function fetchAssignments(params?: { from?: string; to?: string; agentId?: string }): Promise<Assignment[]> {
   if (!SUPABASE_CONFIGURED || !supabase) return [];
-  // Build a local YYYY-MM-DD for today to align with DB date type
-  const todayStr = (() => {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  })();
+
+  const from = params?.from;
+  const to = params?.to;
 
   // Prefer RPC first (ensures id = delivery_assignments.id). View is fallback only.
   if (params?.agentId) {
     try {
       const { data: rpc } = await supabase.rpc('get_agent_assignments', {
         p_agent_id: params.agentId,
-        p_from: todayStr,
-        p_to: todayStr,
+        p_from: from ?? to ?? null,
+        p_to: to ?? from ?? null,
       });
       // Include both shifts; dedupe by customer+shift in case of duplicates
       const seen = new Map<string, any>();
       for (const r of rpc || []) {
-        if (r.date !== todayStr) continue;
         const key = `${r.customer_id}-${r.shift || 'morning'}`;
         if (!seen.has(key)) seen.set(key, r);
       }
@@ -221,11 +215,12 @@ export async function fetchAssignments(params?: { from?: string; to?: string; ag
       .from('delivery_assignments_view')
       .select('id,owner_id,delivery_agent_id,customer_id,date,shift,liters,delivered,assigned_at,unassigned_at');
     if (params?.agentId) query = query.eq('delivery_agent_id', params.agentId);
+    if (from) query = query.gte('date', from);
+    if (to) query = query.lte('date', to);
     const { data, error } = await query.order('date', { ascending: true }).order('shift', { ascending: true });
     if (error) throw error;
-    const filtered = (data || []).filter((r: any) => r.date === todayStr);
     const uniqueByCustomerShift = new Map<string, any>();
-    for (const r of filtered) {
+    for (const r of data || []) {
       const key = `${r.customer_id}-${r.shift || 'morning'}`;
       if (!uniqueByCustomerShift.has(key)) uniqueByCustomerShift.set(key, r);
     }

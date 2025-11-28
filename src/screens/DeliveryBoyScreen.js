@@ -34,6 +34,7 @@ export default function DeliveryBoyScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: '', phone: '', area: '' });
+  const [assignDate, setAssignDate] = useState('');
   const [assignSelection, setAssignSelection] = useState({});
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
@@ -89,6 +90,11 @@ export default function DeliveryBoyScreen() {
   const openAdd = () => {
     setEditingId(null);
     setForm({ name: '', phone: '', area: '' });
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    setAssignDate(`${y}-${m}-${d}`);
     setAssignSelection({});
     setShowCustomerDropdown(false);
     setModalVisible(true);
@@ -103,6 +109,11 @@ export default function DeliveryBoyScreen() {
       phone: item.phone,
       area: item.area,
     });
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    setAssignDate(`${y}-${m}-${d}`);
     setAssignSelection(selected);
     setShowCustomerDropdown(false);
     setModalVisible(true);
@@ -114,12 +125,17 @@ export default function DeliveryBoyScreen() {
       Alert.alert('Missing info', 'Please fill name and phone.');
       return;
     }
+    const startDate = assignDate.trim();
+    if (startDate && !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+      Alert.alert('Invalid date', 'Start date must be in YYYY-MM-DD format.');
+      return;
+    }
     const loginId = phone.trim();
     const selectedCustomerIds = Object.keys(assignSelection).filter((cid) => assignSelection[cid]);
     (async () => {
       try {
         const agent = await saveDeliveryAgent({ id: editingId, name, phone, area, loginId });
-        await replaceAssignments(agent.id, selectedCustomerIds);
+        await replaceAssignments(agent.id, selectedCustomerIds, startDate);
         setModalVisible(false);
         setForm({ name: '', phone: '', area: '' });
         setAssignSelection({});
@@ -245,6 +261,12 @@ export default function DeliveryBoyScreen() {
               placeholder="Assigned Area"
               value={form.area}
               onChangeText={(t) => setForm((s) => ({ ...s, area: t }))}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Start date (YYYY-MM-DD)"
+              value={assignDate}
+              onChangeText={(t) => setAssignDate(t)}
             />
             <Text style={styles.label}>Assigned customers</Text>
 

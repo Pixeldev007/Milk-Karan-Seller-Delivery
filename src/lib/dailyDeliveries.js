@@ -66,6 +66,33 @@ export async function listCustomerDeliveries({ date }) {
   }));
 }
 
+export async function listCustomerDeliveriesRange({ customerId, from, to }) {
+  const user = await requireUser();
+
+  let query = supabase
+    .from('daily_deliveries')
+    .select('id, delivery_date, quantity, status')
+    .eq('owner_id', user.id)
+    .eq('customer_id', customerId);
+
+  if (from) {
+    query = query.gte('delivery_date', from);
+  }
+  if (to) {
+    query = query.lte('delivery_date', to);
+  }
+
+  const { data, error } = await query.order('delivery_date', { ascending: true });
+  if (error) throw error;
+
+  return (data || []).map((row) => ({
+    id: row.id,
+    date: row.delivery_date,
+    quantity: Number(row.quantity ?? 0),
+    status: row.status,
+  }));
+}
+
 export async function ensureDailyDelivery(payload) {
   // Deprecated in new flow, kept as no-op helper mapping if still used elsewhere
   const user = await requireUser();

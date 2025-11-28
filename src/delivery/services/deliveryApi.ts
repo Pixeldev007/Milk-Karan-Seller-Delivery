@@ -287,7 +287,18 @@ export async function setDeliveryStatus(
     p_delivered: delivered,
     p_liters: (Number.isFinite(liters as number) ? (liters as number) : 0),
   });
-  if (error) throw error;
+  if (error) {
+    const msg = String((error as any).message || '');
+    const code = (error as any).code;
+    if (
+      code === '23505' ||
+      msg.includes('duplicate key value') ||
+      msg.includes('dd_owner_date_customer_unique')
+    ) {
+      return;
+    }
+    throw error;
+  }
 }
 
 // New workflow RPCs

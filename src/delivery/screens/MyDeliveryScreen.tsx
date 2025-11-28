@@ -47,7 +47,11 @@ export const MyDeliveryScreen: React.FC = () => {
     if (!selectedDay) return [];
     const list = agent ? deliveryAgents.filter((a) => a.id === agent.id) : [];
     return list.map((agent) => {
-      const agentAssignments = assignments.filter((assignment) => assignment.deliveryAgentId === agent.id && assignment.date === selectedDay.value);
+      const agentAssignments = assignments.filter((assignment) => {
+        if (assignment.deliveryAgentId !== agent.id) return false;
+        const effectiveDate = assignment.date || (assignment.assignedAt ? assignment.assignedAt.slice(0, 10) : undefined);
+        return effectiveDate === selectedDay.value;
+      });
       const totals = agentAssignments.reduce(
         (acc, assignment) => {
           acc.assigned += assignment.liters;

@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { getCustomers } from '../lib/customers';
+import { listCustomerDeliveriesRange } from '../lib/dailyDeliveries';
 
 function toYMD(d) {
   const year = d.getFullYear();
@@ -40,6 +41,11 @@ export default function CreateBillScreen() {
   const [perDayL, setPerDayL] = useState('');
   const [amount, setAmount] = useState('');
 
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState('');
+  const [historyRows, setHistoryRows] = useState([]);
+  const [historyTotalL, setHistoryTotalL] = useState('0.00');
+
   const daysCount = useMemo(() => {
     const a = new Date(fromDate.setHours(0,0,0,0));
     const b = new Date(toDate.setHours(0,0,0,0));
@@ -47,7 +53,7 @@ export default function CreateBillScreen() {
     return diff >= 0 ? diff + 1 : 0; // inclusive range
   }, [fromDate, toDate]);
 
-  const totalMilkL = useMemo(() => {
+  const estimatedTotalMilkL = useMemo(() => {
     const per = parseFloat(perDayL || '0');
     return Number.isFinite(per) ? (per * daysCount).toFixed(2) : '0.00';
   }, [perDayL, daysCount]);
@@ -113,6 +119,43 @@ export default function CreateBillScreen() {
     })();
     return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    if (!selectedCustomer) {
+      setHistoryRows([]);
+      setHistoryTotalL('0.00');
+      setHistoryError('');
+      return;
+    }
+    let mounted = true;
+    (async () => {
+      try {
+        setHistoryLoading(true);
+        setHistoryError('');
+        const from = toYMD(new Date(fromDate));
+        const to = toYMD(new Date(toDate));
+        const rows = await listCustomerDeliveriesRange({
+          customerId: selectedCustomer.id,
+          from,
+          to,
+        });
+        if (!mounted) return;
+        setHistoryRows(rows);
+        const totalQty = rows.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+        setHistoryTotalL(totalQty.toFixed(2));
+      } catch (e) {
+        if (!mounted) return;
+        setHistoryRows([]);
+        setHistoryTotalL('0.00');
+        setHistoryError(e.message || 'Failed to load delivery history');
+      } finally {
+        if (mounted) setHistoryLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [selectedCustomer, fromDate, toDate]);
 
   return (
     <View style={styles.container}>
@@ -183,10 +226,20 @@ export default function CreateBillScreen() {
           <View style={[styles.flexItem, { marginLeft: 8 }]}> 
             <Text style={styles.label}>Total Milk (L)</Text>
             <View style={[styles.input, { justifyContent: 'center' }]}> 
-              <Text style={{ fontWeight: '700', color: '#01559d' }}>{totalMilkL}</Text>
+              {historyLoading ? (
+                <Text style={{ fontWeight: '700', color: '#01559d' }}>Loading...</Text>
+              ) : historyRows.length > 0 ? (
+                <Text style={{ fontWeight: '700', color: '#01559d' }}>{historyTotalL} (from history)</Text>
+              ) : (
+                <Text style={{ fontWeight: '700', color: '#01559d' }}>{estimatedTotalMilkL}</Text>
+              )}
             </View>
           </View>
         </View>
+
+        {!!historyError && (
+          <Text style={{ color: '#c62828', marginTop: 4 }}>{historyError}</Text>
+        )}
 
         {/* Amount */}
         <Text style={[styles.label, { marginTop: 6 }]}>Amount (₹)</Text>

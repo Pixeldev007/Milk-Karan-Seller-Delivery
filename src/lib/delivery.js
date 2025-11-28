@@ -106,7 +106,7 @@ export async function listAssignments(ownerAgentId) {
   return data ?? [];
 }
 
-export async function replaceAssignments(agentId, customerIds) {
+export async function replaceAssignments(agentId, customerIds, startDate) {
   const user = await requireUser();
   const client = supabase;
 
@@ -125,10 +125,14 @@ export async function replaceAssignments(agentId, customerIds) {
     return [];
   }
 
+  const baseAssignedAt = startDate ? new Date(startDate) : new Date();
+  const assignedAtIso = baseAssignedAt.toISOString();
+
   const inserts = customerIds.map((customerId) => ({
     owner_id: user.id,
     delivery_agent_id: agentId,
     customer_id: customerId,
+    assigned_at: assignedAtIso,
   }));
 
   const { data, error } = await client

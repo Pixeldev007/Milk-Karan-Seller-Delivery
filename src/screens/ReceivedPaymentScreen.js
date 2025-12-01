@@ -28,6 +28,7 @@ export default function ReceivedPaymentScreen() {
         amount: Number(p.amount) || 0,
         date: p.payment_date,
         mode: p.mode,
+        invoiceNumber: p.invoice?.invoice_number || null,
       }));
       setRows(mapped);
     } catch (error) {
@@ -71,7 +72,12 @@ export default function ReceivedPaymentScreen() {
   const renderItem = ({ item }) => (
     <View style={styles.row}>
       <Text style={[styles.cell, { flex: 2 }]}>{item.customer}</Text>
-      <Text style={[styles.cell, { flex: 1 }]}>₹ {item.amount}</Text>
+      <View style={[styles.cell, { flex: 1 }]}> 
+        <Text>₹ {item.amount}</Text>
+        {item.invoiceNumber ? (
+          <Text style={{ fontSize: 10, color: '#666' }}>Inv: {item.invoiceNumber}</Text>
+        ) : null}
+      </View>
       <Text style={[styles.cell, { flex: 1 }]}>{item.date}</Text>
       <Text style={[styles.cell, { flex: 1 }]}>{item.mode}</Text>
     </View>

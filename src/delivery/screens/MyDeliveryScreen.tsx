@@ -11,7 +11,8 @@ const buildDays = (): Day[] => {
   const now = new Date();
   const labels = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   const arr: Day[] = [];
-  for (let i = -3; i <= 3; i++) {
+  // Show the last 7 days including today (no future dates)
+  for (let i = -6; i <= 0; i++) {
     const d = new Date(now);
     d.setHours(0, 0, 0, 0);
     d.setDate(now.getDate() + i);

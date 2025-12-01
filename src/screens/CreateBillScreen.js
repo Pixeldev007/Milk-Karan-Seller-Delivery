@@ -12,8 +12,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
+import { Linking } from 'react-native';
 import { getCustomers } from '../lib/customers';
 import { listCustomerDeliveriesRange } from '../lib/dailyDeliveries';
+import { nextInvoiceNumber, createInvoice, addInvoiceItem } from '../lib/invoices';
+import { supabase } from '../lib/supabase';
 
 function toYMD(d) {
   const year = d.getFullYear();
@@ -35,8 +38,18 @@ export default function CreateBillScreen() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerPickerVisible, setCustomerPickerVisible] = useState(false);
 
-  const [fromDate, setFromDate] = useState(new Date());
-  const [toDate, setToDate] = useState(new Date());
+  const [fromDate, setFromDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+  const [toDate, setToDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1, 0); // last day of current month
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
 
   const [perDayL, setPerDayL] = useState('');
   const [amount, setAmount] = useState('');
@@ -45,6 +58,8 @@ export default function CreateBillScreen() {
   const [historyError, setHistoryError] = useState('');
   const [historyRows, setHistoryRows] = useState([]);
   const [historyTotalL, setHistoryTotalL] = useState('0.00');
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
+  const [lastInvoice, setLastInvoice] = useState(null);
 
   const daysCount = useMemo(() => {
     const a = new Date(fromDate.setHours(0,0,0,0));
@@ -64,16 +79,131 @@ export default function CreateBillScreen() {
     setCustomerPickerVisible(false);
   };
 
-  const onGeneratePdf = () => {
+  const onCreateInvoice = async () => {
     if (!selectedCustomer) {
       Alert.alert('Select Customer', 'Please select a customer first.');
       return;
     }
-    Alert.alert('Generate PDF', `Customer: ${selectedCustomer.name}\nFrom: ${toYMD(new Date(fromDate))}\nTo: ${toYMD(new Date(toDate))}\nTotal Milk: ${totalMilkL} L\nAmount: ₹${amount || '0'}`);
+    if (!historyRows.length) {
+      Alert.alert('No history', 'No deliveries found for the selected range.');
+      return;
+    }
+    const amountNum = parseFloat(amount || '0');
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      Alert.alert('Amount required', 'Enter a valid invoice amount.');
+      return;
+    }
+    try {
+      setCreatingInvoice(true);
+      const monthBase = new Date(toDate);
+      const monthStartDate = new Date(monthBase.getFullYear(), monthBase.getMonth(), 1);
+      const monthEndDate = new Date(monthBase.getFullYear(), monthBase.getMonth() + 1, 0);
+      const monthStart = toYMD(monthStartDate);
+      const monthEnd = toYMD(monthEndDate);
+
+      const { data: existing, error: existingError } = await supabase
+        .from('invoices')
+        .select('id')
+        .eq('customer_id', selectedCustomer.id)
+        .gte('issue_date', monthStart)
+        .lte('issue_date', monthEnd)
+        .limit(1)
+        .maybeSingle();
+      if (existingError) {
+        throw existingError;
+      }
+      if (existing) {
+        Alert.alert('Invoice exists', 'A monthly invoice already exists for this customer and month.');
+        return;
+      }
+
+      const invoiceNumber = await nextInvoiceNumber();
+      const issueDate = monthEnd;
+      const notes = `Milk deliveries from ${monthStart} to ${monthEnd}`;
+      const invoice = await createInvoice({
+        invoiceNumber,
+        customerId: selectedCustomer.id,
+        issueDate,
+        status: 'Draft',
+        notes,
+      });
+      await addInvoiceItem(invoice.id, {
+        description: `Milk delivery (${monthStart} to ${monthEnd})`,
+        quantity: 1,
+        unit: 'Total',
+        unitPrice: amountNum,
+        lineTotal: amountNum,
+        productId: null,
+      });
+      const totalL = historyRows.length > 0 ? historyTotalL : estimatedTotalMilkL;
+      setLastInvoice({
+        id: invoice.id,
+        invoiceNumber,
+        amount: amountNum,
+        from: monthStart,
+        to: monthEnd,
+        totalL,
+        customerName: selectedCustomer.name,
+        customerPhone: selectedCustomer.phone,
+      });
+      Alert.alert('Invoice created', `Invoice ${invoiceNumber} created for ${selectedCustomer.name}.`);
+    } catch (e) {
+      Alert.alert('Create invoice failed', e.message || 'Unable to create invoice.');
+    } finally {
+      setCreatingInvoice(false);
+    }
+  };
+
+  const onGeneratePdf = () => {
+    if (!lastInvoice) {
+      Alert.alert('Create Invoice', 'Please create an invoice first.');
+      return;
+    }
+    const summary = [
+      `Invoice: ${lastInvoice.invoiceNumber}`,
+      `Customer: ${lastInvoice.customerName} (${lastInvoice.customerPhone || ''})`,
+      `Period: ${lastInvoice.from} to ${lastInvoice.to}`,
+      `Total Milk: ${lastInvoice.totalL} L`,
+      `Amount: ₹${lastInvoice.amount.toFixed ? lastInvoice.amount.toFixed(2) : lastInvoice.amount}`,
+    ].join('\n');
+    Alert.alert('Invoice summary', summary);
   };
 
   const onSendWhatsApp = () => {
-    Alert.alert('Send via WhatsApp', 'This will open WhatsApp with the bill summary (to be implemented).');
+    if (!lastInvoice) {
+      Alert.alert('Create Invoice', 'Please create an invoice first.');
+      return;
+    }
+    const reminder = `Bill / Invoice ${lastInvoice.invoiceNumber} is created and sent to you in the app Transaction page.\nPlease check and pay this month bill and any due amount. Thank you.`;
+    const phone = (lastInvoice.customerPhone || '').replace(/\D+/g, '');
+    const url = phone
+      ? `whatsapp://send?phone=${phone}&text=${encodeURIComponent(reminder)}`
+      : `whatsapp://send?text=${encodeURIComponent(reminder)}`;
+    Linking.openURL(url).catch(() => {
+      Alert.alert('WhatsApp not available', 'Could not open WhatsApp. Please ensure it is installed.');
+    });
+  };
+
+  const onSendInvoiceShare = () => {
+    if (!lastInvoice) {
+      Alert.alert('Create Invoice', 'Please create an invoice first.');
+      return;
+    }
+    (async () => {
+      try {
+        const { error } = await supabase
+          .from('invoices')
+          .update({ status: 'Sent' })
+          .eq('id', lastInvoice.id);
+        if (error) throw error;
+        Alert.alert(
+          'Invoice sent',
+          'Invoice is now available in the customer app Payment screen for this month.',
+        );
+      } catch (e) {
+        Alert.alert('Send failed', e.message || 'Unable to mark invoice as sent.');
+      }
+    })();
   };
 
   const decFrom = () => setFromDate((d) => addDays(d, -1));
@@ -253,13 +383,28 @@ export default function CreateBillScreen() {
 
         {/* Actions */}
         <View style={styles.actions}>
+          <TouchableOpacity style={[styles.actionBtn, styles.pdfBtn]} onPress={onCreateInvoice} disabled={creatingInvoice}>
+            {creatingInvoice ? (
+              <ActivityIndicator size="small" color="#01559d" />
+            ) : (
+              <Ionicons name="receipt-outline" size={18} color="#01559d" />
+            )}
+            <Text style={[styles.actionText, { color: '#01559d' }]}>Create Invoice</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, styles.pdfBtn]} onPress={onSendInvoiceShare}>
+            <Ionicons name="send-outline" size={18} color="#01559d" />
+            <Text style={[styles.actionText, { color: '#01559d' }]}>Send Invoice</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.actions, { marginTop: 8 }]}>
           <TouchableOpacity style={[styles.actionBtn, styles.pdfBtn]} onPress={onGeneratePdf}>
             <Ionicons name="document-outline" size={18} color="#01559d" />
-            <Text style={[styles.actionText, { color: '#01559d' }]}>Generate PDF</Text>
+            <Text style={[styles.actionText, { color: '#01559d' }]}>Preview Invoice</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionBtn, styles.whatsBtn]} onPress={onSendWhatsApp}>
             <Ionicons name="logo-whatsapp" size={18} color="#fff" />
-            <Text style={[styles.actionText, { color: '#fff' }]}>Send via WhatsApp</Text>
+            <Text style={[styles.actionText, { color: '#fff' }]}>Send WhatsApp Reminder</Text>
           </TouchableOpacity>
         </View>
       </View>

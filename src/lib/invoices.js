@@ -94,7 +94,6 @@ export async function listInvoiceItems(invoiceId) {
 }
 
 export async function addInvoiceItem(invoiceId, payload) {
-  const user = await requireUser();
   const insertPayload = {
     invoice_id: invoiceId,
     description: payload.description,
@@ -103,7 +102,6 @@ export async function addInvoiceItem(invoiceId, payload) {
     unit_price: payload.unitPrice ?? payload.lineTotal ?? 0,
     line_total: payload.lineTotal ?? (payload.quantity ?? 1) * (payload.unitPrice ?? 0),
     product_id: payload.productId ?? null,
-    owner_id: user.id,
   };
 
   const { data, error } = await supabase

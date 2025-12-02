@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Alert, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../lib/supabase';
 
 export default function MessageScreen() {
   const [message, setMessage] = useState('');
@@ -26,9 +27,55 @@ export default function MessageScreen() {
     })();
   };
 
-  const sendNotification = () => {
-    if (!message.trim()) return Alert.alert('Empty', 'Please enter a message first.');
-    Alert.alert('Notification', 'This will send a push notification to all customers (to be implemented).');
+  const sendNotification = async () => {
+    const text = message.trim();
+    if (!text) {
+      Alert.alert('Empty', 'Please enter a message first.');
+      return;
+    }
+
+    try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) throw sessionError;
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to send notifications.');
+      }
+
+      const baseUrl =
+        process.env.EXPO_PUBLIC_SUPABASE_URL ||
+        process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        '';
+
+      if (!baseUrl) {
+        throw new Error('Supabase URL not configured for push notifications.');
+      }
+
+      const res = await fetch(`${baseUrl}/functions/v1/broadcast_notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          role: 'customer',
+          title: 'Milk Karan Update',
+          body: text,
+        }),
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || 'Failed to send notification.');
+      }
+
+      Alert.alert('Sent', 'Notification sent request submitted for all customer apps.');
+    } catch (e) {
+      Alert.alert('Error', e?.message || 'Failed to send notification.');
+    }
   };
 
   return (

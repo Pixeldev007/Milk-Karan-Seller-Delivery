@@ -57,7 +57,7 @@ export default function SubscriptionScreen({ navigation }) {
         <Card
           title="Free"
           price={null}
-          limit="Limit: 30 Customers"
+          limit={null}
           features={[
             'Plan: Free',
             'Expiry: Lifetime',
@@ -75,9 +75,9 @@ export default function SubscriptionScreen({ navigation }) {
           {/* Silver */}
           <View style={[styles.pricingCol, isWide ? styles.pricingColWide : styles.pricingColStacked]}>
             <Card
-              title="🥈 Silver"
+              title=" Silver"
               price="₹599 / month"
-              limit="Limit: 100 Customers"
+              limit="Draft plan (coming soon)"
               features={[
                 'Manage customer list',
                 'Daily sales entry',
@@ -85,18 +85,18 @@ export default function SubscriptionScreen({ navigation }) {
                 'Manual billing',
               ]}
               icon="medal-outline"
-              buttonText="Subscribe Now"
-              onPress={() => handleSubscribe('Silver')}
-              onSupport={() => Alert.alert('Support', 'We will contact you shortly.')}
+              buttonText={null}
+              onPress={null}
+              onSupport={null}
             />
           </View>
 
           {/* Gold */}
           <View style={[styles.pricingCol, isWide ? styles.pricingColWide : styles.pricingColStacked]}>
             <Card
-              title="🥇 Gold"
+              title=" Gold"
               price="₹699 / month"
-              limit="Limit: 300 Customers"
+              limit="Draft plan (coming soon)"
               features={[
                 'Everything in Silver',
                 'WhatsApp notification integration',
@@ -104,18 +104,18 @@ export default function SubscriptionScreen({ navigation }) {
                 'Priority support',
               ]}
               icon="trophy-outline"
-              buttonText="Subscribe Now"
-              onPress={() => handleSubscribe('Gold')}
-              onSupport={() => Alert.alert('Support', 'We will contact you shortly.')}
+              buttonText={null}
+              onPress={null}
+              onSupport={null}
             />
           </View>
 
           {/* Platinum */}
           <View style={[styles.pricingCol, isWide ? styles.pricingColWide : styles.pricingColStacked]}>
             <Card
-              title="💎 Platinum"
+              title=" Platinum"
               price="₹799 / month"
-              limit="Unlimited Customers"
+              limit="Draft plan (coming soon)"
               features={[
                 'All Gold features',
                 'Auto-billing',
@@ -123,9 +123,9 @@ export default function SubscriptionScreen({ navigation }) {
                 'Custom reports',
               ]}
               icon="diamond-outline"
-              buttonText="Subscribe Now"
-              onPress={() => handleSubscribe('Platinum')}
-              onSupport={() => Alert.alert('Support', 'We will contact you shortly.')}
+              buttonText={null}
+              onPress={null}
+              onSupport={null}
             />
           </View>
         </View>

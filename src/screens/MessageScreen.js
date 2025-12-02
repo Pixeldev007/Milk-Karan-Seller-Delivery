@@ -1,13 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Alert, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function MessageScreen() {
   const [message, setMessage] = useState('');
 
   const sendWhatsApp = () => {
-    if (!message.trim()) return Alert.alert('Empty', 'Please enter a message first.');
-    Alert.alert('WhatsApp', 'This will open WhatsApp with your broadcast (to be implemented).');
+    const text = message.trim();
+    if (!text) return Alert.alert('Empty', 'Please enter a message first.');
+
+    const encoded = encodeURIComponent(text);
+    const url = `whatsapp://send?text=${encoded}`;
+
+    (async () => {
+      try {
+        const canOpen = await Linking.canOpenURL(url);
+        if (!canOpen) {
+          Alert.alert('WhatsApp not available', 'WhatsApp is not installed or cannot be opened on this device.');
+          return;
+        }
+        await Linking.openURL(url);
+      } catch (e) {
+        Alert.alert('Error', e?.message || 'Unable to open WhatsApp.');
+      }
+    })();
   };
 
   const sendNotification = () => {

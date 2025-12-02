@@ -1,13 +1,74 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Platform, FlatList, Alert } from 'react-native';
 // Removed ScreenContainer/ScrollView to avoid nesting a FlatList inside ScrollView
 import HeaderBar from '../components/HeaderBar';
 import { Ionicons } from '@expo/vector-icons';
 import MenuCard from '../components/MenuCard';
 import CalendarStrip from '../components/CalendarStrip';
+import { supabase } from '../lib/supabase';
+import { requireUser } from '../lib/session';
 
 export default function DashboardScreen({ navigation }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [completedCount, setCompletedCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [totalLiters, setTotalLiters] = useState(0);
+
+  const toYMD = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const user = await requireUser();
+        const dateKey = toYMD(selectedDate);
+
+        const { data, error } = await supabase
+          .from('daily_deliveries')
+          .select('status, quantity')
+          .eq('owner_id', user.id)
+          .eq('delivery_date', dateKey);
+
+        if (!active) return;
+        if (error) {
+          throw error;
+        }
+
+        const rows = data || [];
+        let completed = 0;
+        let pending = 0;
+        let liters = 0;
+
+        for (const row of rows) {
+          const status = row.status;
+          const qty = Number(row.quantity || 0);
+          if (status === 'Delivered') {
+            completed += 1;
+            liters += qty;
+          } else if (status === 'Pending') {
+            pending += 1;
+          }
+        }
+
+        setCompletedCount(completed);
+        setPendingCount(pending);
+        setTotalLiters(liters);
+      } catch (e) {
+        if (active) {
+          Alert.alert('Error', e.message || 'Failed to load dashboard stats.');
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedDate]);
   const menuItems = [
     { id: 1, title: 'My Customer', icon: 'people', color: '#01559d' },
     { id: 2, title: 'Delivery Boy', icon: 'car', color: '#01559d' },
@@ -24,19 +85,21 @@ export default function DashboardScreen({ navigation }) {
       <CalendarStrip selectedDate={selectedDate} onDateSelect={setSelectedDate} />
       <View style={styles.statsContainer}>
         <View style={styles.statCardCompact}>
-          <Text style={[styles.statNumberCompact, { color: '#01559d' }]}>0</Text>
+          <Text style={[styles.statNumberCompact, { color: '#01559d' }]}>{completedCount}</Text>
           <View style={[styles.statIconCircle, { backgroundColor: 'rgba(1,85,157,0.15)' }]}>
             <Ionicons name="checkmark" size={20} color="#01559d" />
           </View>
         </View>
         <View style={styles.statCardCompact}>
-          <Text style={[styles.statNumberCompact, { color: '#01559d' }]}>0</Text>
+          <Text style={[styles.statNumberCompact, { color: '#01559d' }]}>{pendingCount}</Text>
           <View style={[styles.statIconCircle, { backgroundColor: 'rgba(1,85,157,0.15)' }]}>
             <Ionicons name="close" size={20} color="#01559d" />
           </View>
         </View>
         <View style={[styles.statCardCompact, styles.statCardEmphasis]}>
-          <Text style={[styles.statNumberCompact, styles.statNumberEmphasis, { color: '#01559d' }]}>0.00 L</Text>
+          <Text style={[styles.statNumberCompact, styles.statNumberEmphasis, { color: '#01559d' }]}>
+            {totalLiters.toFixed(2)} L
+          </Text>
           <View style={[styles.statIconCircle, styles.statIconCircleLarge, { backgroundColor: 'rgba(1,85,157,0.15)' }]}>
             <Ionicons name="water" size={22} color="#01559d" />
           </View>

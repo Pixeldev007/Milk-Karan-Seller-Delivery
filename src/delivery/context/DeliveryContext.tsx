@@ -100,9 +100,9 @@ export const DeliveryProvider: React.FC<React.PropsWithChildren> = ({ children }
       const now = new Date();
       now.setHours(0, 0, 0, 0);
       const fromD = new Date(now);
-      fromD.setDate(fromD.getDate() - 7);
+      fromD.setDate(fromD.getDate() - 120);
       const toD = new Date(now);
-      toD.setDate(toD.getDate() + 7);
+      toD.setDate(toD.getDate() + 40);
       const toISO = (d: Date) => new Date(d).toISOString().slice(0, 10);
       const today = toISO(now);
       // Reset overrides if day changed

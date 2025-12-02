@@ -17,13 +17,6 @@ function DrawerContentLazy(props) {
 
 const Drawer = createDrawerNavigator();
 
-// Lazy wrapper to defer requiring BillScreen (which depends on optional packages)
-function BillScreenLazy(props) {
-  // require only when this screen is actually rendered
-  const { BillScreen } = require('../delivery/screens/BillScreen');
-  return <BillScreen {...props} />;
-}
-
 // Lazy wrapper to defer requiring DashboardScreen (loads DeliveryContext and supabase client)
 function DashboardScreenLazy(props) {
   const { DashboardScreen } = require('../delivery/screens/DashboardScreen');
@@ -73,7 +66,6 @@ export default function DeliveryNavigator() {
           >
             <Drawer.Screen name="Dashboard" component={DashboardScreenLazy} />
             <Drawer.Screen name="MyPickup" component={MyPickupScreenLazy} />
-            <Drawer.Screen name="Bill" component={BillScreenLazy} />
             <Drawer.Screen name="MyDelivery" component={MyDeliveryScreen} />
             <Drawer.Screen name="Report" component={ReportScreenLazy} />
             <Drawer.Screen name="Settings" component={SettingsScreenLazy} />

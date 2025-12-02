@@ -37,6 +37,16 @@ export default function CalendarStrip({ selectedDate, onDateSelect }) {
     return date.toLocaleDateString('en-US', options);
   };
 
+  const goToPrevMonth = () => {
+    const prev = new Date(year, month - 1, 1);
+    onDateSelect(prev);
+  };
+
+  const goToNextMonth = () => {
+    const next = new Date(year, month + 1, 1);
+    onDateSelect(next);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.calendarHeader}>
@@ -69,8 +79,13 @@ export default function CalendarStrip({ selectedDate, onDateSelect }) {
         </ScrollView>
       </View>
       <View style={styles.dateDisplay}>
+        <TouchableOpacity onPress={goToPrevMonth} style={styles.monthArrow}>
+          <Ionicons name="chevron-back" size={20} color="#01559d" />
+        </TouchableOpacity>
         <Text style={styles.dateDisplayText}>{formatDate(selectedDate)}</Text>
-        <Ionicons name="chevron-down" size={20} color="#01559d" />
+        <TouchableOpacity onPress={goToNextMonth} style={styles.monthArrow}>
+          <Ionicons name="chevron-forward" size={20} color="#01559d" />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -131,6 +146,9 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#01559d',
+  },
+  monthArrow: {
+    paddingHorizontal: 8,
   },
   dateDisplayText: {
     fontSize: 16,

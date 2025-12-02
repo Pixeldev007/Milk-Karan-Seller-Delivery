@@ -1,6 +1,18 @@
 import { SUPABASE_CONFIGURED, supabase } from '../lib/supabaseClient';
 import type { Assignment, Customer, DeliveryAgent } from '../data/mock';
 
+export type AgentDailyDeliveryRow = {
+	id: string;
+	date: string;
+	shift: string;
+	quantity: number;
+	status: string;
+	delivered: boolean;
+	customerId?: string;
+	customerName?: string;
+	customerPhone?: string;
+};
+
 export async function fetchCustomers(agentId?: string): Promise<Customer[]> {
   if (!SUPABASE_CONFIGURED || !supabase) return [];
 
@@ -240,6 +252,37 @@ export async function fetchAssignments(params?: { from?: string; to?: string; ag
   } catch {
     return [];
   }
+}
+
+export async function fetchAgentDailyDeliveries(params: { date: string; agentId?: string }): Promise<AgentDailyDeliveryRow[]> {
+	if (!SUPABASE_CONFIGURED || !supabase) return [];
+	const { date, agentId } = params;
+	try {
+		let query = supabase
+			.from('daily_deliveries')
+			.select(
+				'id, delivery_date, shift, quantity, status, customer_id, customer:customers!daily_deliveries_customer_id_fkey(id, name, phone)',
+			);
+		query = query.eq('delivery_date', date);
+		if (agentId) {
+			query = query.eq('delivery_agent_id', agentId);
+		}
+		const { data, error } = await query.order('updated_at', { ascending: false });
+		if (error) throw error;
+		return (data || []).map((row: any) => ({
+			id: row.id,
+			date: row.delivery_date,
+			shift: row.shift,
+			quantity: Number(row.quantity ?? 0),
+			status: row.status,
+			delivered: row.status === 'Delivered',
+			customerId: row.customer?.id,
+			customerName: row.customer?.name,
+			customerPhone: row.customer?.phone,
+		}));
+	} catch {
+		return [];
+	}
 }
 
 export async function insertAssignment(payload: Omit<Assignment, 'id' | 'assignedAt' | 'unassignedAt'>): Promise<Assignment | null> {

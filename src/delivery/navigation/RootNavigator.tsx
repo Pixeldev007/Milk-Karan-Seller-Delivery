@@ -6,7 +6,6 @@ import { DashboardScreen } from '../screens/DashboardScreen';
 import { DailySellScreen } from '../screens/DailySellScreen';
 import { MyPickupScreen } from '../screens/MyPickupScreen';
 import { DrawerContent } from '../screens/DrawerContent';
-import { BillScreen } from '../screens/BillScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { Colors } from '../theme/colors';
 import { MyDeliveryScreen } from '../screens/MyDeliveryScreen';
@@ -38,7 +37,6 @@ function DrawerRoot() {
       <Drawer.Screen name="DailySell" component={DailySellScreen} />
       <Drawer.Screen name="MyPickup" component={MyPickupScreen} />
       <Drawer.Screen name="MyDelivery" component={MyDeliveryScreen} />
-      <Drawer.Screen name="Bill" component={BillScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
     </Drawer.Navigator>
   );

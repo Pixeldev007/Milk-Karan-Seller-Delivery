@@ -24,7 +24,7 @@ const Card: React.FC<{ icon: IconName; title: string; subtitle: string; onPress?
 
 export const DashboardScreen: React.FC = () => {
   const nav = useNavigation();
-  const { configured, connected, refresh, loading } = useDelivery();
+  const { configured, connected, refresh, loading, assignments } = useDelivery();
   const status = React.useMemo(() => {
     if (!configured) return { label: 'Supabase: Not configured', color: '#dc2626', icon: 'close-circle' as const };
     if (connected) return { label: 'Supabase: Connected', color: '#16a34a', icon: 'checkmark-circle' as const };
@@ -32,6 +32,31 @@ export const DashboardScreen: React.FC = () => {
   }, [configured, connected]);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const stats = React.useMemo(() => {
+    const d = new Date(selectedDate);
+    d.setHours(0, 0, 0, 0);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const iso = `${year}-${month}-${day}`;
+    const todays = assignments.filter((a) => {
+      const effectiveDate = a.date || (a.assignedAt ? a.assignedAt.slice(0, 10) : undefined);
+      return effectiveDate === iso;
+    });
+    let completed = 0;
+    let pending = 0;
+    let totalLiters = 0;
+    todays.forEach((a) => {
+      if (a.delivered) {
+        completed += 1;
+        totalLiters += Number(a.liters || 0);
+      } else {
+        pending += 1;
+      }
+    });
+    return { completed, pending, totalLiters };
+  }, [selectedDate, assignments]);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
@@ -53,19 +78,19 @@ export const DashboardScreen: React.FC = () => {
         {/* Compact stats row (three small boxes) */}
         <View style={styles.statsContainer}>
           <View style={styles.statCardCompact}>
-            <Text style={[styles.statNumberCompact, { color: '#01559d' }]}>0</Text>
+            <Text style={[styles.statNumberCompact, { color: '#01559d' }]}>{stats.completed}</Text>
             <View style={[styles.statIconCircle, { backgroundColor: 'rgba(1,85,157,0.15)' }]}>
               <Ionicons name="checkmark" size={18} color="#01559d" />
             </View>
           </View>
           <View style={styles.statCardCompact}>
-            <Text style={[styles.statNumberCompact, { color: '#01559d' }]}>0</Text>
+            <Text style={[styles.statNumberCompact, { color: '#01559d' }]}>{stats.pending}</Text>
             <View style={[styles.statIconCircle, { backgroundColor: 'rgba(1,85,157,0.15)' }]}>
               <Ionicons name="close" size={18} color="#01559d" />
             </View>
           </View>
           <View style={[styles.statCardCompact, styles.statCardEmphasis]}>
-            <Text style={[styles.statNumberCompact, styles.statNumberEmphasis, { color: '#01559d' }]}>0.00 L</Text>
+            <Text style={[styles.statNumberCompact, styles.statNumberEmphasis, { color: '#01559d' }]}>{`${stats.totalLiters.toFixed(2)} L`}</Text>
             <View style={[styles.statIconCircle, styles.statIconCircleLarge, { backgroundColor: 'rgba(1,85,157,0.15)' }]}>
               <Ionicons name="water" size={18} color="#01559d" />
             </View>
@@ -74,7 +99,6 @@ export const DashboardScreen: React.FC = () => {
 
         <ScrollView contentContainerStyle={{ padding: 12 }}>
           <Card icon="car" title="My Pickup" subtitle="Pickup, delivery, analysis" onPress={() => nav.navigate('MyPickup' as never)} />
-          <Card icon="receipt" title="Create Bill" subtitle="Make customers bill, credit" onPress={() => nav.navigate('Bill' as never)} />
           <Card icon="bus" title="My Delivery" subtitle="View delivery details" onPress={() => nav.navigate('MyDelivery' as never)} />
           <Card icon="document-text" title="Report" subtitle="Enquiry / Message" onPress={() => nav.navigate('Report' as never)} />
 

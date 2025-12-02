@@ -185,16 +185,52 @@ export default function CreateBillScreen() {
   };
 
   const onSendInvoiceShare = () => {
-    if (!lastInvoice) {
-      Alert.alert('Create Invoice', 'Please create an invoice first.');
-      return;
-    }
     (async () => {
       try {
+        let invoiceToSend = lastInvoice;
+
+        if (!invoiceToSend) {
+          if (!selectedCustomer) {
+            Alert.alert('Select Customer', 'Please select a customer first.');
+            return;
+          }
+
+          const monthBase = new Date(toDate);
+          const monthStartDate = new Date(monthBase.getFullYear(), monthBase.getMonth(), 1);
+          const monthEndDate = new Date(monthBase.getFullYear(), monthBase.getMonth() + 1, 0);
+          const monthStart = toYMD(monthStartDate);
+          const monthEnd = toYMD(monthEndDate);
+
+          const { data: existing, error: existingError } = await supabase
+            .from('invoices')
+            .select('id, invoice_number')
+            .eq('customer_id', selectedCustomer.id)
+            .gte('issue_date', monthStart)
+            .lte('issue_date', monthEnd)
+            .order('issue_date', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (existingError) {
+            throw existingError;
+          }
+
+          if (!existing) {
+            Alert.alert('Create Invoice', 'Please create an invoice first.');
+            return;
+          }
+
+          invoiceToSend = {
+            id: existing.id,
+            invoiceNumber: existing.invoice_number,
+          };
+          setLastInvoice((prev) => prev || invoiceToSend);
+        }
+
         const { error } = await supabase
           .from('invoices')
-          .update({ status: 'Sent' })
-          .eq('id', lastInvoice.id);
+          .update({ status: 'Issued' })
+          .eq('id', invoiceToSend.id);
         if (error) throw error;
         Alert.alert(
           'Invoice sent',

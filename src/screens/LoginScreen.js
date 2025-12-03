@@ -57,6 +57,7 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             placeholder="you@example.com"
+            placeholderTextColor="#9E9E9E"
             style={styles.input}
             editable={!loading}
           />
@@ -69,6 +70,7 @@ export default function LoginScreen() {
             onChangeText={setPassword}
             secureTextEntry
             placeholder="Enter your password"
+            placeholderTextColor="#9E9E9E"
             style={styles.input}
             editable={!loading}
           />
@@ -152,6 +154,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     fontSize: 16,
     backgroundColor: '#FAFAFA',
+    color: '#000000',
   },
   primaryButton: {
     backgroundColor: '#01559d',

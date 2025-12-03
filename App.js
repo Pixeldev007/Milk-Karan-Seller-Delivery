@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import React from 'react';
-import { ActivityIndicator, Platform, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Platform, TextInput, useWindowDimensions, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -41,6 +41,11 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import DeliveryLoginScreen from './src/screens/DeliveryLoginScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+
+if (TextInput.defaultProps == null) {
+  TextInput.defaultProps = {};
+}
+TextInput.defaultProps.placeholderTextColor = '#9E9E9E';
 
 if (__DEV__) {
   try {

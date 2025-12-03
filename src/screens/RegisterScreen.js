@@ -39,11 +39,14 @@ export default function RegisterScreen() {
     setMessage('');
     try {
       await signUp({ email: email.trim(), password, fullName: fullName.trim() });
-      setMessage('Account created successfully! You can now sign in.');
+      setMessage('Account created successfully! Redirecting you to login...');
       setFullName('');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
+      setTimeout(() => {
+        navigation.navigate('Login');
+      }, 2000);
     } catch (err) {
       setError(err.message ?? 'Unable to sign up. Please try again.');
     } finally {
@@ -61,14 +64,30 @@ export default function RegisterScreen() {
         <Text style={styles.subtitle}>Join Milk Karan to simplify your dairy management.</Text>
 
         {!!error && <Text style={styles.error}>{error}</Text>}
-        {!!message && <Text style={styles.message}>{message}</Text>}
+        {!!message && (
+          <View style={styles.successCard}>
+            <View style={styles.successHeader}>
+              <View style={styles.successIconCircle}>
+                <Text style={styles.successIcon}>✓</Text>
+              </View>
+              <Text style={styles.successStatus}>SUCCESS</Text>
+            </View>
+            <View style={styles.successBody}>
+              <Text style={styles.successMessage}>{message}</Text>
+              <View style={styles.successButton}>
+                <Text style={styles.successButtonText}>Continue</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Full Name</Text>
           <TextInput
             value={fullName}
             onChangeText={setFullName}
-            placeholder="Pooja Suresh"
+            placeholder="Enter your Name "
+            placeholderTextColor="#9E9E9E"
             style={styles.input}
             editable={!loading}
           />
@@ -82,7 +101,8 @@ export default function RegisterScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
-            placeholder="you@example.com"
+            placeholder="Enter valid Email"
+            placeholderTextColor="#9E9E9E"
             style={styles.input}
             editable={!loading}
           />
@@ -95,6 +115,7 @@ export default function RegisterScreen() {
             onChangeText={setPassword}
             secureTextEntry
             placeholder="Create a password"
+            placeholderTextColor="#9E9E9E"
             style={styles.input}
             editable={!loading}
           />
@@ -107,6 +128,7 @@ export default function RegisterScreen() {
             onChangeText={setConfirmPassword}
             secureTextEntry
             placeholder="Re-enter your password"
+            placeholderTextColor="#9E9E9E"
             style={styles.input}
             editable={!loading}
           />
@@ -178,6 +200,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     fontSize: 16,
     backgroundColor: '#FAFAFA',
+    color: '#000000',
   },
   primaryButton: {
     backgroundColor: '#01559d',
@@ -214,7 +237,92 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   message: {
-    color: '#01559d',
+    color: '#1B5E20',
     marginBottom: 12,
+  },
+  successOverlay: {
+    // no-op: kept for compatibility if used elsewhere
+  },
+  successCard: {
+    width: '100%',
+    marginTop: 8,
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+    alignItems: 'center',
+  },
+  successHeader: {
+    width: '100%',
+    backgroundColor: '#01559d',
+    paddingVertical: 24,
+    alignItems: 'center',
+  },
+  successIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  successIcon: {
+    fontSize: 32,
+    color: '#FFFFFF',
+  },
+  successStatus: {
+    fontWeight: '300',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  successBody: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 24,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  successMessage: {
+    marginTop: -4,
+    color: '#757575',
+    letterSpacing: 0.5,
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  successButton: {
+    marginTop: 24,
+    backgroundColor: '#01559d',
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+    shadowColor: 'rgba(50, 50, 50, 1)',
+    shadowOpacity: 0.21,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  successButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  successTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1B5E20',
+    marginBottom: 6,
+  },
+  successText: {
+    fontSize: 15,
+    color: '#2E7D32',
+    textAlign: 'center',
   },
 });

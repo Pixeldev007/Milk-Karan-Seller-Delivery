@@ -59,76 +59,15 @@ export default function SubscriptionScreen({ navigation }) {
           price={null}
           limit={null}
           features={[
-            'Plan: Free',
-            'Expiry: Lifetime',
+            'Plan: Free (up to 100 customers)',
+            'Daily milk entry and billing summary',
+            'Basic customer list management',
             'Status: Active',
           ]}
           icon="ribbon-outline"
           buttonText="Upgrade Now"
           onPress={() => handleSubscribe('Upgrade')}
         />
-
-        {/* Section 2: Subscription Options */}
-        <Text style={[styles.sectionTitle, { marginTop: 22 }]}>Choose a plan</Text>
-
-        <View style={[styles.pricingRow, isWide ? styles.pricingRowWide : styles.pricingRowStacked]}>
-          {/* Silver */}
-          <View style={[styles.pricingCol, isWide ? styles.pricingColWide : styles.pricingColStacked]}>
-            <Card
-              title=" Silver"
-              price="₹599 / month"
-              limit="Draft plan (coming soon)"
-              features={[
-                'Manage customer list',
-                'Daily sales entry',
-                'Order reports',
-                'Manual billing',
-              ]}
-              icon="medal-outline"
-              buttonText={null}
-              onPress={null}
-              onSupport={null}
-            />
-          </View>
-
-          {/* Gold */}
-          <View style={[styles.pricingCol, isWide ? styles.pricingColWide : styles.pricingColStacked]}>
-            <Card
-              title=" Gold"
-              price="₹699 / month"
-              limit="Draft plan (coming soon)"
-              features={[
-                'Everything in Silver',
-                'WhatsApp notification integration',
-                'Export daily sales to Excel',
-                'Priority support',
-              ]}
-              icon="trophy-outline"
-              buttonText={null}
-              onPress={null}
-              onSupport={null}
-            />
-          </View>
-
-          {/* Platinum */}
-          <View style={[styles.pricingCol, isWide ? styles.pricingColWide : styles.pricingColStacked]}>
-            <Card
-              title=" Platinum"
-              price="₹799 / month"
-              limit="Draft plan (coming soon)"
-              features={[
-                'All Gold features',
-                'Auto-billing',
-                'Delivery boy management',
-                'Custom reports',
-              ]}
-              icon="diamond-outline"
-              buttonText={null}
-              onPress={null}
-              onSupport={null}
-            />
-          </View>
-        </View>
       </ScrollView>
     </View>
   );

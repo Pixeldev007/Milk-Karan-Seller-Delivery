@@ -4,6 +4,7 @@ import ScreenContainer from '../components/ScreenContainer';
 import HeaderBar from '../components/HeaderBar';
 import { Ionicons } from '@expo/vector-icons';
 import { listProducts, createProduct, updateProduct, removeProduct } from '../lib/products';
+import { supabase, SUPABASE_CONFIGURED } from '../lib/supabaseClient';
 
 // Layout constants for web modal sizing
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
@@ -68,8 +69,8 @@ export default function ProductScreen({ navigation }) {
   useEffect(() => {
     (async () => {
       try {
-        if (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) {
-          setConnState({ checked: true, ok: false, msg: 'Missing EXPO_PUBLIC_SUPABASE_* env vars' });
+        if (!SUPABASE_CONFIGURED || !supabase) {
+          setConnState({ checked: true, ok: false, msg: 'Supabase configuration missing (URL or anon key).' });
           return;
         }
         await fetchProducts();

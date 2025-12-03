@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Alert, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { supabase } from '../lib/supabase';
 
 export default function MessageScreen() {
@@ -45,9 +46,12 @@ export default function MessageScreen() {
         throw new Error('You must be logged in to send notifications.');
       }
 
+      const extra = (Constants.expoConfig?.extra || {});
       const baseUrl =
         process.env.EXPO_PUBLIC_SUPABASE_URL ||
+        extra.EXPO_PUBLIC_SUPABASE_URL ||
         process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        extra.NEXT_PUBLIC_SUPABASE_URL ||
         '';
 
       if (!baseUrl) {
